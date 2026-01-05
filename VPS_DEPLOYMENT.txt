@@ -1,0 +1,306 @@
+================================================================================
+VPS DEPLOYMENT GUIDE - Email Extractor Application
+================================================================================
+
+OVERVIEW
+--------
+The application is now configured to run as a UNIFIED system:
+- Backend serves both API endpoints AND the built Angular frontend
+- Everything runs on ONE port (3000 by default)
+- Single domain, single server process
+- Production-ready configuration
+
+
+DEPLOYMENT STEPS
+================================================================================
+
+STEP 1: BUILD THE APPLICATION LOCALLY
+--------------------------------------
+On your local machine:
+
+    cd /Users/gdknmac/Documents/GitHub/jscemailextractor
+    ./build-production.sh
+
+This will:
+- Install all dependencies
+- Build Angular for production (minified, optimized)
+- Prepare backend for production
+
+
+STEP 2: PREPARE VPS
+--------------------
+On your VPS, install required software:
+
+    # Update system
+    sudo apt update && sudo apt upgrade -y
+
+    # Install Node.js (v18 or higher)
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt install -y nodejs
+
+    # Install PM2 (process manager)
+    sudo npm install -g pm2
+
+    # Install Nginx (optional, for reverse proxy)
+    sudo apt install -y nginx
+
+
+STEP 3: UPLOAD FILES TO VPS
+----------------------------
+Upload these folders/files to your VPS (e.g., /var/www/email-extractor/):
+
+Required Files:
+    ✅ backend/                  (entire folder including node_modules)
+    ✅ frontend/dist/            (built Angular files)
+    ✅ .env                      (create from .env.example with your credentials)
+
+You can use SCP, SFTP, or Git:
+
+Using SCP:
+    scp -r backend/ user@your-vps-ip:/var/www/email-extractor/
+    scp -r frontend/dist/ user@your-vps-ip:/var/www/email-extractor/frontend/
+
+Using Git:
+    # On VPS
+    cd /var/www
+    git clone <your-repo-url> email-extractor
+    cd email-extractor
+    ./build-production.sh
+
+
+STEP 4: CONFIGURE ENVIRONMENT
+------------------------------
+On VPS:
+
+    cd /var/www/email-extractor/backend
+    nano .env
+
+Update these values:
+    PORT=3000
+    NODE_ENV=production
+    JWT_SECRET=your-strong-random-secret-key
+    SMTP_USER=your-email@gmail.com
+    SMTP_PASS=your-app-password
+    GMAIL_USER=your-gmail@gmail.com
+    GMAIL_APP_PASSWORD=your-gmail-app-password
+
+
+STEP 5: START THE APPLICATION
+------------------------------
+
+Option A: Using PM2 (Recommended for production)
+-------------------------------------------------
+    cd /var/www/email-extractor/backend
+    pm2 start server.js --name email-extractor
+    pm2 save
+    pm2 startup
+
+Access application at: http://your-vps-ip:3000
+
+Option B: Direct Node.js (For testing)
+---------------------------------------
+    cd /var/www/email-extractor/backend
+    npm start
+
+Press Ctrl+C to stop
+
+
+STEP 6: CONFIGURE NGINX REVERSE PROXY (OPTIONAL)
+-------------------------------------------------
+To run on port 80/443 with your domain:
+
+    sudo nano /etc/nginx/sites-available/email-extractor
+
+Add this configuration:
+
+    server {
+        listen 80;
+        server_name your-domain.com www.your-domain.com;
+
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+Enable the site:
+    sudo ln -s /etc/nginx/sites-available/email-extractor /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+
+Now access at: http://your-domain.com
+
+
+STEP 7: SSL CERTIFICATE (HTTPS)
+--------------------------------
+Install Let's Encrypt SSL:
+
+    sudo apt install certbot python3-certbot-nginx
+    sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+
+Auto-renewal:
+    sudo certbot renew --dry-run
+
+Access at: https://your-domain.com
+
+
+MANAGEMENT COMMANDS
+================================================================================
+
+View Application Logs:
+    pm2 logs email-extractor
+
+Restart Application:
+    pm2 restart email-extractor
+
+Stop Application:
+    pm2 stop email-extractor
+
+Delete from PM2:
+    pm2 delete email-extractor
+
+Check Application Status:
+    pm2 status
+
+Monitor Resources:
+    pm2 monit
+
+
+TROUBLESHOOTING
+================================================================================
+
+Application won't start:
+------------------------
+1. Check logs: pm2 logs email-extractor
+2. Verify .env file exists and has correct values
+3. Ensure port 3000 is not in use: netstat -tuln | grep 3000
+4. Check file permissions: ls -la /var/www/email-extractor
+
+Cannot access from browser:
+----------------------------
+1. Check firewall: sudo ufw allow 3000
+2. Verify application is running: pm2 status
+3. Test locally on VPS: curl http://localhost:3000
+4. Check nginx configuration if using reverse proxy
+
+Gmail connection issues:
+------------------------
+1. Verify Gmail App Password is correct
+2. Ensure IMAP is enabled in Gmail settings
+3. Check VPS can reach Gmail: ping imap.gmail.com
+4. Review backend logs for specific errors
+
+OTP emails not sending:
+-----------------------
+1. Verify SMTP credentials in .env
+2. Check spam/junk folders
+3. Test SMTP connection from VPS
+4. Review backend logs for email service errors
+
+
+UPDATING THE APPLICATION
+================================================================================
+
+1. Build locally:
+    ./build-production.sh
+
+2. Upload new files to VPS:
+    scp -r backend/ user@vps:/var/www/email-extractor/
+    scp -r frontend/dist/ user@vps:/var/www/email-extractor/frontend/
+
+3. Restart on VPS:
+    pm2 restart email-extractor
+
+
+BACKUP RECOMMENDATIONS
+================================================================================
+
+1. Backup .env file (contains credentials)
+2. Set up automated backups of /var/www/email-extractor/
+3. Export PM2 configuration: pm2 save
+4. Document your nginx configuration
+
+
+SECURITY BEST PRACTICES
+================================================================================
+
+✅ Use strong JWT_SECRET (random 64+ character string)
+✅ Keep Node.js and npm updated
+✅ Use HTTPS (SSL certificate)
+✅ Configure firewall (ufw)
+✅ Regular security updates: sudo apt update && sudo apt upgrade
+✅ Use PM2 to restart on crashes
+✅ Monitor logs regularly
+✅ Keep .env file secure (chmod 600)
+✅ Use environment variables, not hardcoded credentials
+
+
+STRUCTURE ON VPS
+================================================================================
+
+/var/www/email-extractor/
+├── backend/
+│   ├── node_modules/
+│   ├── routes/
+│   ├── services/
+│   ├── middleware/
+│   ├── server.js
+│   ├── .env              ← Your credentials
+│   └── package.json
+└── frontend/
+    └── dist/
+        └── frontend/
+            └── browser/  ← Angular built files
+                ├── index.html
+                ├── main.*.js
+                └── ...
+
+Backend serves everything from ONE process!
+
+
+ACCESSING YOUR APPLICATION
+================================================================================
+
+Development (Local):
+    Frontend: http://localhost:4200
+    Backend:  http://localhost:3000
+
+Production (VPS without Nginx):
+    Full App: http://your-vps-ip:3000
+
+Production (VPS with Nginx):
+    Full App: http://your-domain.com
+    Full App: https://your-domain.com (with SSL)
+
+
+ADVANTAGES OF THIS SETUP
+================================================================================
+
+✅ Single server process - Easy to manage
+✅ No CORS issues - API and frontend on same origin
+✅ Efficient - Backend serves static files directly
+✅ Simple deployment - Upload and run
+✅ Scalable - Can add load balancer later
+✅ Cost-effective - One server, one port
+✅ Standard industry practice - Used by major apps
+
+
+SUPPORT
+================================================================================
+
+Developer: Tuneer Mahatpure
+Email: mahatpuretuneer@gmail.com
+
+For issues or questions about deployment, reach out!
+
+
+================================================================================
+END OF DEPLOYMENT GUIDE
+================================================================================

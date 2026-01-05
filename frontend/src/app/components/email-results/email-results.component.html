@@ -1,0 +1,131 @@
+<div class="email-results-container">
+  <div class="header">
+    <div class="header-section">
+      <button class="btn-back" routerLink="/email-reader">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M13 4L7 10L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back to Email Reader
+      </button>
+      <a [routerLink]="['/developer-contact']" class="dev-link">Developer Contact</a>
+    </div>
+    <div class="title-section">
+      <h1>Email Attachment Data</h1>
+      <p class="subtitle" *ngIf="results">
+        Extracted data from {{ results.count }} email(s) - {{ totalRecords }} total records
+      </p>
+    </div>
+    <button 
+      *ngIf="hasData()" 
+      class="btn btn-primary"
+      (click)="exportAllAttachments()"
+    >
+      Export All Data
+    </button>
+  </div>
+
+  <div *ngIf="!results" class="empty-state">
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+      <circle cx="60" cy="60" r="50" fill="#f0f0f0"/>
+      <path d="M40 50L60 65L80 50V80C80 82.7614 77.7614 85 75 85H45C42.2386 85 40 82.7614 40 80V50Z" stroke="#999" stroke-width="3"/>
+    </svg>
+    <p>No email data available</p>
+    <button class="btn btn-secondary" routerLink="/email-reader">Go to Email Reader</button>
+  </div>
+
+  <div *ngIf="results && results.processed.length > 0" class="emails-list">
+    <div *ngFor="let email of results.processed" class="email-card">
+      <div class="email-header">
+        <div class="email-info">
+          <h3>{{ email.subject }}</h3>
+          <p class="email-meta">
+            <strong>From:</strong> {{ email.from }} | 
+            <strong>Date:</strong> {{ formatDate(email.date) }} | 
+            <strong>Attachments:</strong> {{ email.attachments.length }}
+          </p>
+        </div>
+      </div>
+
+      <div class="attachments-grid">
+        <div *ngFor="let attachment of email.attachments" class="attachment-card">
+          <div class="attachment-icon">
+            {{ getFileIcon(attachment.contentType, attachment.filename) }}
+          </div>
+          <div class="attachment-details">
+            <h4 class="attachment-name">{{ attachment.filename }}</h4>
+            <div class="attachment-stats">
+              <span class="stat-badge">{{ formatFileSize(attachment.size) }}</span>
+              <span class="stat-badge" *ngIf="attachment.rowCount > 0">{{ attachment.rowCount }} rows</span>
+              <span class="stat-badge" *ngIf="attachment.columnCount > 0">{{ attachment.columnCount }} cols</span>
+            </div>
+          </div>
+          <div class="attachment-actions">
+            <button 
+              *ngIf="attachment.data && attachment.data.length > 0"
+              class="btn-action"
+              (click)="viewAttachment(attachment)"
+            >
+              View Data
+            </button>
+            <button 
+              *ngIf="attachment.data && attachment.data.length > 0"
+              class="btn-action btn-export"
+              (click)="exportAttachment(attachment)"
+            >
+              Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for viewing attachment data -->
+  <div *ngIf="showModal && selectedAttachment" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2>{{ selectedAttachment.filename }}</h2>
+          <p class="modal-meta">
+            {{ formatFileSize(selectedAttachment.size) }} | 
+            {{ selectedAttachment.rowCount }} rows × {{ selectedAttachment.columnCount }} columns
+          </p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="exportAttachment(selectedAttachment)">
+            Export CSV
+          </button>
+          <button class="btn-close" (click)="closeModal()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div *ngIf="selectedAttachment.data && selectedAttachment.data.length > 0" class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="row-number">#</th>
+                <th *ngFor="let header of selectedAttachment.headers">{{ header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of selectedAttachment.data; let i = index">
+                <td class="row-number">{{ i + 1 }}</td>
+                <td *ngFor="let header of selectedAttachment.headers">
+                  {{ row[header] || '' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="!selectedAttachment.data || selectedAttachment.data.length === 0" class="no-data">
+          <p>No data available for this attachment</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

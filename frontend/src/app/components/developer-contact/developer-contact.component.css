@@ -1,0 +1,253 @@
+.contact-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.contact-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  width: 100%;
+  overflow: hidden;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contact-header {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 50px 30px;
+  text-align: center;
+}
+
+.contact-header .icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.contact-header h1 {
+  font-size: 36px;
+  margin: 0 0 12px 0;
+  font-weight: 700;
+}
+
+.contact-header .subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.info-section {
+  padding: 40px 30px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-light-bg) 0%, var(--primary-lighter-bg) 100%);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.company-logo {
+  margin-bottom: 20px;
+}
+
+.logo-icon {
+  font-size: 80px;
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.company-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
+}
+
+.tagline {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+.details-section {
+  padding: 40px 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.detail-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.detail-card:hover {
+  border-color: var(--primary-color);
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+}
+
+.detail-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.detail-content {
+  flex: 1;
+}
+
+.detail-content h3 {
+  font-size: 14px;
+  color: #999;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.detail-content p {
+  font-size: 16px;
+  color: #333;
+  margin: 0;
+  font-weight: 500;
+}
+
+.detail-content a {
+  font-size: 16px;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.detail-content a:hover {
+  text-decoration: underline;
+}
+
+.support-section {
+  padding: 40px 30px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.support-section h3 {
+  font-size: 24px;
+  color: #333;
+  margin: 0 0 16px 0;
+  font-weight: 700;
+}
+
+.support-section p {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+}
+
+.support-hours {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+  margin-top: 20px;
+}
+
+.support-hours p {
+  margin: 0;
+  color: #333;
+  font-size: 15px;
+}
+
+.action-section {
+  padding: 30px;
+  text-align: center;
+}
+
+.btn-back {
+  padding: 14px 32px;
+  background: white;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  background: var(--primary-gradient);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--primary-shadow-strong);
+}
+
+.footer {
+  background: #f8f9fa;
+  padding: 20px 30px;
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
+}
+
+.footer p {
+  margin: 0;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .contact-container {
+    padding: 20px 10px;
+  }
+
+  .contact-header h1 {
+    font-size: 28px;
+  }
+
+  .contact-header .icon {
+    font-size: 48px;
+  }
+
+  .company-name {
+    font-size: 22px;
+  }
+
+  .details-section {
+    grid-template-columns: 1fr;
+  }
+
+  .support-section h3 {
+    font-size: 20px;
+  }
+}

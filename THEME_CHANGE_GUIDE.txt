@@ -1,0 +1,257 @@
+===============================================================================
+                        THEME CHANGE GUIDE
+                     Email Extractor Application
+===============================================================================
+
+OVERVIEW:
+All theme colors are centralized in ONE file for easy customization.
+You can change the entire application theme by editing a single file!
+
+===============================================================================
+HOW TO CHANGE THE THEME
+===============================================================================
+
+STEP 1: Open the theme configuration file
+   File: frontend/src/styles.css
+   Location: Lines 1-45 (THEME CONFIGURATION section)
+
+STEP 2: Choose your preferred method:
+
+   METHOD A - Edit Existing Colors (Custom Theme)
+   -----------------------------------------------
+   Edit the CSS variables in :root section:
+   
+   :root {
+     --primary-color: #ff6b35;        👈 Change this hex color
+     --primary-dark: #f7931e;         👈 Change this hex color
+     --primary-light: #ff8555;        👈 Change this hex color
+     ...
+   }
+
+   METHOD B - Use Preset Themes (Quick Switch)
+   --------------------------------------------
+   Uncomment one of the preset themes:
+   
+   1. Purple Theme - Lines 52-63
+   2. Blue Theme - Lines 66-77
+   3. Green Theme - Lines 80-91
+   4. Red Theme - Lines 94-105
+
+   Simply remove the /* and */ around your chosen theme!
+
+===============================================================================
+PRESET THEMES AVAILABLE
+===============================================================================
+
+1. ORANGE THEME (Current/Default)
+   Primary: #ff6b35
+   Dark: #f7931e
+   Use Case: Energetic, creative applications
+
+2. PURPLE THEME
+   Primary: #667eea
+   Dark: #764ba2
+   Use Case: Professional, corporate applications
+
+3. BLUE THEME
+   Primary: #0066cc
+   Dark: #0052a3
+   Use Case: Trustworthy, business applications
+
+4. GREEN THEME
+   Primary: #28a745
+   Dark: #1e7e34
+   Use Case: Health, eco-friendly applications
+
+5. RED THEME
+   Primary: #dc3545
+   Dark: #c82333
+   Use Case: Alert, attention-grabbing applications
+
+===============================================================================
+EXAMPLE: SWITCHING TO PURPLE THEME
+===============================================================================
+
+BEFORE (Orange):
+:root {
+  --primary-color: #ff6b35;
+  --primary-dark: #f7931e;
+  ...
+}
+
+AFTER (Purple) - Two Options:
+
+Option 1: Comment out Orange, uncomment Purple preset
+/*
+:root {
+  --primary-color: #ff6b35;
+  --primary-dark: #f7931e;
+  ...
+}
+*/
+
+/* Purple Theme - Uncomment to switch */
+:root {
+  --primary-color: #667eea;
+  --primary-dark: #764ba2;
+  --primary-light: #7e8ef5;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-light-bg: #e8eeff;
+  --primary-lighter-bg: #f0e8ff;
+  --primary-lightest-bg: #f8f9ff;
+  --primary-shadow-light: rgba(102, 126, 234, 0.1);
+  --primary-shadow-medium: rgba(102, 126, 234, 0.2);
+  --primary-shadow-strong: rgba(102, 126, 234, 0.4);
+}
+
+Option 2: Directly edit the main :root values
+:root {
+  --primary-color: #667eea;
+  --primary-dark: #764ba2;
+  ...
+}
+
+===============================================================================
+CREATING A CUSTOM THEME
+===============================================================================
+
+1. Find your brand colors (e.g., from your logo)
+
+2. Choose your primary color:
+   --primary-color: #YOUR_COLOR
+
+3. Create a darker shade (for gradients):
+   --primary-dark: #DARKER_SHADE
+   
+   Tool: Use https://colordesigner.io/gradient-generator
+
+4. Create a lighter shade (for hover effects):
+   --primary-light: #LIGHTER_SHADE
+
+5. Update the gradient:
+   --primary-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+
+6. Update light backgrounds (use 5-10% opacity of your color):
+   --primary-light-bg: #YOUR_COLOR_LIGHT
+   --primary-lighter-bg: #YOUR_COLOR_LIGHTER
+   --primary-lightest-bg: #YOUR_COLOR_LIGHTEST
+   
+   Tool: Use https://rgba-to-hex.com/
+
+7. Update shadow colors (convert hex to rgba):
+   --primary-shadow-light: rgba(R, G, B, 0.1);
+   --primary-shadow-medium: rgba(R, G, B, 0.2);
+   --primary-shadow-strong: rgba(R, G, B, 0.4);
+   
+   Tool: Use https://www.rapidtables.com/convert/color/hex-to-rgb.html
+
+===============================================================================
+AFFECTED COMPONENTS
+===============================================================================
+
+When you change the theme in styles.css, it automatically updates:
+
+✓ Login Page
+  - Background gradient
+  - Login card header
+  - Input focus states
+  - Buttons (primary & secondary)
+  - Links
+
+✓ Home Page
+  - Page title gradient
+  - Logout button
+  - Feature card borders and hover effects
+  - Feature buttons
+  - Highlight badges
+  - Info card accents
+
+✓ Email Reader Page
+  - Back button hover
+  - Input focus states
+  - Predefined query buttons
+  - Search button
+  - Attachment badges
+  - All action buttons
+
+✓ Email Results Page
+  - Back button hover
+  - View/Export buttons
+  - Attachment cards
+  - Action buttons
+  - All interactive elements
+
+===============================================================================
+TESTING YOUR THEME
+===============================================================================
+
+1. Save the styles.css file after making changes
+
+2. The Angular dev server will automatically reload (if running)
+   If not running: npm start (in frontend folder)
+
+3. Refresh your browser at http://localhost:4200
+
+4. Navigate through all pages to verify:
+   - Login page
+   - Home page
+   - Email Reader
+   - Email Results
+
+5. Test interactions:
+   - Hover over buttons
+   - Focus on input fields
+   - Check all colored elements
+
+===============================================================================
+REVERTING CHANGES
+===============================================================================
+
+If you want to go back to the original Orange theme:
+
+1. Open: frontend/src/styles.css
+
+2. Replace the :root section with:
+   :root {
+     --primary-color: #ff6b35;
+     --primary-dark: #f7931e;
+     --primary-light: #ff8555;
+     --primary-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+     --primary-light-bg: #fff5f0;
+     --primary-lighter-bg: #ffe8d9;
+     --primary-lightest-bg: #fff9f6;
+     --primary-shadow-light: rgba(255, 107, 53, 0.1);
+     --primary-shadow-medium: rgba(255, 107, 53, 0.2);
+     --primary-shadow-strong: rgba(255, 107, 53, 0.4);
+   }
+
+3. Save and refresh your browser
+
+===============================================================================
+TIPS & BEST PRACTICES
+===============================================================================
+
+✓ Always test theme changes on all pages
+✓ Ensure sufficient contrast for accessibility
+✓ Use color contrast checkers: https://webaim.org/resources/contrastchecker/
+✓ Keep backup of your custom theme colors
+✓ Test on different screen sizes (mobile, tablet, desktop)
+✓ Consider your brand identity when choosing colors
+✓ Use complementary colors for better UX
+
+===============================================================================
+NEED HELP?
+===============================================================================
+
+If you encounter any issues while changing the theme:
+
+1. Check browser console for errors (F12)
+2. Verify CSS syntax is correct (no missing semicolons, brackets)
+3. Clear browser cache and hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+4. Restart the Angular dev server
+
+Developer Contact:
+Name: Tuneer Mahatpure
+Email: mahatpuretuneer@gmail.com
+
+===============================================================================

@@ -1,0 +1,805 @@
+================================================================================
+WINDOWS VPS DEPLOYMENT GUIDE - Email Extractor Application
+================================================================================
+
+OVERVIEW
+--------
+Complete guide for deploying Email Extractor on Windows Server VPS/VPS.
+The application runs as a unified system with backend serving both API and 
+Angular frontend on a single port.
+
+SYSTEM REQUIREMENTS
+================================================================================
+
+Minimum Specifications:
+- Windows Server 2016, 2019, 2022, or Windows 10/11
+- 2 GB RAM (4 GB recommended)
+- 10 GB free disk space
+- Internet connection
+- Administrator access
+
+Required Software:
+- Node.js v18.x or higher
+- npm (comes with Node.js)
+- PM2 (process manager)
+- IIS (optional, for reverse proxy)
+
+
+PRE-DEPLOYMENT SETUP
+================================================================================
+
+STEP 1: INSTALL NODE.JS
+------------------------
+1. Download Node.js LTS from: https://nodejs.org/
+2. Run the installer (node-v18.x.x-x64.msi)
+3. Follow installation wizard:
+   - Check "Automatically install necessary tools"
+   - Accept license agreement
+   - Use default installation path: C:\Program Files\nodejs\
+4. Restart computer after installation
+
+Verify installation:
+   Open PowerShell or Command Prompt:
+   node --version
+   npm --version
+
+Expected output:
+   v18.x.x
+   9.x.x
+
+
+STEP 2: INSTALL PM2 FOR WINDOWS
+--------------------------------
+Open PowerShell as Administrator:
+
+   npm install -g pm2
+   npm install -g pm2-windows-service
+
+Install PM2 as Windows Service:
+   pm2-service-install
+
+Configuration prompts:
+   - PM2_HOME: C:\ProgramData\pm2\home
+   - PM2_SERVICE_NAME: PM2
+   - Set PM2 to run at startup? Yes
+
+Verify PM2 installation:
+   pm2 --version
+   pm2 list
+
+
+STEP 3: CONFIGURE WINDOWS FIREWALL
+-----------------------------------
+Allow Node.js through firewall:
+
+Option A - Using GUI:
+1. Open Windows Defender Firewall
+2. Click "Advanced settings"
+3. Click "Inbound Rules" → "New Rule"
+4. Rule Type: Port
+5. Protocol: TCP
+6. Specific local ports: 3000
+7. Action: Allow the connection
+8. Profile: Check all (Domain, Private, Public)
+9. Name: Email Extractor - Port 3000
+
+Option B - Using PowerShell (as Administrator):
+   New-NetFirewallRule -DisplayName "Email Extractor" -Direction Inbound -Protocol TCP -LocalPort 3000 -Action Allow
+
+
+STEP 4: CREATE APPLICATION DIRECTORY
+-------------------------------------
+Create folder structure:
+
+   mkdir C:\inetpub\email-extractor
+   cd C:\inetpub\email-extractor
+
+
+LOCAL BUILD PREPARATION
+================================================================================
+
+BUILD APPLICATION ON YOUR LOCAL MACHINE
+----------------------------------------
+Before uploading to Windows VPS, build the application locally:
+
+On your local machine (Mac/Windows/Linux):
+
+1. Navigate to project directory:
+   cd /Users/gdknmac/Documents/GitHub/jscemailextractor
+
+2. Install dependencies:
+   cd frontend
+   npm install
+   cd ../backend
+   npm install
+
+3. Build Angular for production:
+   cd ../frontend
+   npm run build --configuration production
+
+   This creates: frontend/dist/frontend/browser/
+
+4. Verify backend dependencies:
+   cd ../backend
+   npm install --production
+
+
+FILES TO UPLOAD TO WINDOWS VPS
+================================================================================
+
+Upload these folders/files to C:\inetpub\email-extractor\:
+
+Required Structure:
+   C:\inetpub\email-extractor\
+   ├── backend\
+   │   ├── middleware\
+   │   ├── routes\
+   │   ├── services\
+   │   ├── server.js
+   │   ├── package.json
+   │   ├── ecosystem.config.js
+   │   └── .env                  ← Create this file
+   └── frontend\
+       └── dist\
+           └── frontend\
+               └── browser\      ← Built Angular files
+                   ├── index.html
+                   ├── main.*.js
+                   └── ...
+
+
+UPLOAD METHODS
+==============
+
+Method 1: FTP/SFTP (Using FileZilla, WinSCP)
+---------------------------------------------
+1. Install FileZilla or WinSCP
+2. Connect to your Windows VPS
+   - Host: your-vps-ip
+   - Username: Administrator
+   - Password: your-password
+   - Port: 21 (FTP) or 22 (SFTP)
+3. Navigate to C:\inetpub\email-extractor\
+4. Upload backend\ folder
+5. Upload frontend\dist\ folder
+
+Method 2: Remote Desktop
+------------------------
+1. Connect via Remote Desktop (mstsc.exe)
+2. Copy files from local machine
+3. Paste to C:\inetpub\email-extractor\
+
+Method 3: Git Clone (If using Git)
+-----------------------------------
+On Windows VPS PowerShell:
+   cd C:\inetpub
+   git clone https://your-repo-url.git email-extractor
+   cd email-extractor\frontend
+   npm install
+   npm run build --configuration production
+   cd ..\backend
+   npm install --production
+
+
+CONFIGURATION ON WINDOWS VPS
+================================================================================
+
+STEP 1: CREATE ENVIRONMENT FILE
+--------------------------------
+Navigate to backend folder:
+   cd C:\inetpub\email-extractor\backend
+
+Copy example file:
+   copy .env.example .env
+
+Edit .env file:
+   notepad .env
+
+Configure these values:
+   # Server Configuration
+   PORT=3000
+   NODE_ENV=production
+
+   # JWT Secret (generate random string)
+   JWT_SECRET=your-random-secret-key-min-64-chars
+
+   # Email Service (for sending OTP)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=your-gmail-app-password
+
+   # Gmail IMAP (for reading emails)
+   GMAIL_USER=your-gmail@gmail.com
+   GMAIL_APP_PASSWORD=your-gmail-app-password
+
+   # OTP Configuration
+   OTP_EXPIRY_MINUTES=10
+
+   # Optional
+   ALLOWED_DOMAINS=
+   MAX_FILE_SIZE=10485760
+   DOWNLOAD_DIRECTORY=./temp/attachments
+
+Save and close notepad (Ctrl+S, Alt+F4)
+
+
+STEP 2: INSTALL BACKEND DEPENDENCIES
+-------------------------------------
+If not already installed:
+   cd C:\inetpub\email-extractor\backend
+   npm install --production
+
+
+STEP 3: CREATE LOGS DIRECTORY
+------------------------------
+   mkdir C:\inetpub\email-extractor\backend\logs
+
+
+STEP 4: TEST APPLICATION MANUALLY
+----------------------------------
+Before setting up as service, test manually:
+   cd C:\inetpub\email-extractor\backend
+   node server.js
+
+Expected output:
+   ╔════════════════════════════════════════════════════════════╗
+   ║          EMAIL EXTRACTOR API SERVER                        ║
+   ║  Server running on: http://localhost:3000                  ║
+   ╚════════════════════════════════════════════════════════════╝
+
+Open browser and test:
+   http://localhost:3000
+
+If working, press Ctrl+C to stop
+
+
+STARTING APPLICATION WITH PM2
+================================================================================
+
+STEP 1: START APPLICATION
+--------------------------
+   cd C:\inetpub\email-extractor\backend
+   pm2 start ecosystem.config.js
+
+Expected output:
+   ┌─────┬──────────────────┬─────────────┬─────────┬─────────┬──────────┐
+   │ id  │ name             │ mode        │ ↺       │ status  │ cpu      │
+   ├─────┼──────────────────┼─────────────┼─────────┼─────────┼──────────┤
+   │ 0   │ email-extractor  │ fork        │ 0       │ online  │ 0%       │
+   └─────┴──────────────────┴─────────────┴─────────┴─────────┴──────────┘
+
+
+STEP 2: SAVE PM2 CONFIGURATION
+-------------------------------
+   pm2 save
+
+This saves the process list so it restarts after reboot
+
+
+STEP 3: VERIFY APPLICATION IS RUNNING
+--------------------------------------
+Check status:
+   pm2 status
+
+View logs:
+   pm2 logs email-extractor
+
+Monitor resources:
+   pm2 monit
+
+
+STEP 4: TEST IN BROWSER
+------------------------
+Open browser:
+   http://localhost:3000
+   http://your-vps-ip:3000
+
+You should see the Email Extractor login page
+
+
+ACCESSING FROM INTERNET
+================================================================================
+
+OPTION A: DIRECT ACCESS (Port 3000)
+------------------------------------
+Access application at:
+   http://your-vps-ip:3000
+   http://your-domain.com:3000
+
+Ensure port 3000 is allowed in firewall (see Step 3 above)
+
+
+OPTION B: IIS REVERSE PROXY (Port 80/443)
+------------------------------------------
+To access without port number (http://your-domain.com):
+
+1. Install IIS:
+   - Open Server Manager
+   - Add Roles and Features
+   - Select Web Server (IIS)
+   - Install
+
+2. Install URL Rewrite Module:
+   Download from: https://www.iis.net/downloads/microsoft/url-rewrite
+   Run installer: rewrite_amd64_en-US.msi
+
+3. Install Application Request Routing (ARR):
+   Download from: https://www.iis.net/downloads/microsoft/application-request-routing
+   Run installer: requestRouter_amd64.msi
+
+4. Enable ARR Proxy:
+   - Open IIS Manager
+   - Click server name
+   - Double-click "Application Request Routing Cache"
+   - Click "Server Proxy Settings"
+   - Check "Enable proxy"
+   - Apply
+
+5. Configure URL Rewrite:
+   - In IIS Manager, click "Default Web Site"
+   - Double-click "URL Rewrite"
+   - Click "Add Rule(s)" → "Reverse Proxy"
+   - Enter: localhost:3000
+   - OK
+
+6. Test:
+   http://your-vps-ip
+   http://your-domain.com
+
+
+SSL CERTIFICATE (HTTPS)
+================================================================================
+
+OPTION 1: USING WIN-ACME (FREE - LET'S ENCRYPT)
+------------------------------------------------
+1. Download win-acme:
+   https://www.win-acme.com/
+
+2. Extract to C:\Tools\win-acme\
+
+3. Run as Administrator:
+   cd C:\Tools\win-acme
+   .\wacs.exe
+
+4. Follow wizard:
+   - N: Create new certificate (default settings)
+   - Enter your domain name
+   - Select IIS site
+   - Automatic configuration
+   - Accept terms
+
+5. Certificate auto-renews every 90 days
+
+Access via HTTPS:
+   https://your-domain.com
+
+
+OPTION 2: USING PAID SSL CERTIFICATE
+-------------------------------------
+1. Purchase SSL certificate from provider
+2. Download certificate files (.crt and .key)
+3. In IIS Manager:
+   - Click server name → "Server Certificates"
+   - Import certificate
+4. Bind certificate to site:
+   - Select site → Bindings
+   - Add HTTPS binding
+   - Select certificate
+
+
+PM2 MANAGEMENT COMMANDS (WINDOWS)
+================================================================================
+
+View running processes:
+   pm2 list
+
+Start application:
+   pm2 start ecosystem.config.js
+
+Restart application:
+   pm2 restart email-extractor
+
+Stop application:
+   pm2 stop email-extractor
+
+Delete from PM2:
+   pm2 delete email-extractor
+
+View logs (all):
+   pm2 logs
+
+View logs (specific app):
+   pm2 logs email-extractor
+
+Clear logs:
+   pm2 flush
+
+Monitor resources:
+   pm2 monit
+
+Show detailed info:
+   pm2 show email-extractor
+
+Resurrect saved processes:
+   pm2 resurrect
+
+
+TROUBLESHOOTING WINDOWS VPS
+================================================================================
+
+APPLICATION WON'T START
+-----------------------
+1. Check logs:
+   pm2 logs email-extractor
+
+2. Verify .env file exists:
+   dir C:\inetpub\email-extractor\backend\.env
+
+3. Check if port 3000 is available:
+   netstat -ano | findstr :3000
+
+4. Kill process using port 3000:
+   taskkill /PID <process_id> /F
+
+5. Verify Node.js is installed:
+   node --version
+
+6. Check file permissions:
+   - Right-click folder → Properties → Security
+   - Ensure IIS_IUSRS and NETWORK SERVICE have read access
+
+
+CANNOT ACCESS FROM BROWSER
+---------------------------
+1. Test locally first:
+   http://localhost:3000
+
+2. Check Windows Firewall:
+   - Open Windows Defender Firewall
+   - Ensure port 3000 is allowed
+
+3. Check VPS provider firewall/security groups
+
+4. Verify application is running:
+   pm2 status
+
+5. Check IIS if using reverse proxy:
+   - Ensure IIS is started
+   - Check URL Rewrite rules
+
+
+GMAIL CONNECTION ISSUES
+------------------------
+1. Verify Gmail App Password is correct in .env
+2. Enable IMAP in Gmail settings
+3. Check if VPS can reach Gmail:
+   Test-NetConnection -ComputerName imap.gmail.com -Port 993
+
+4. Review logs:
+   pm2 logs email-extractor
+
+
+OTP EMAILS NOT SENDING
+-----------------------
+1. Verify SMTP credentials in .env
+2. Check if VPS can send emails:
+   Test-NetConnection -ComputerName smtp.gmail.com -Port 587
+
+3. Check Gmail settings:
+   - Less secure app access (not needed with App Password)
+   - 2-Step Verification enabled
+
+4. Review backend logs for errors
+
+
+PM2 SERVICE NOT STARTING ON BOOT
+---------------------------------
+1. Verify PM2 Windows Service is installed:
+   Get-Service -Name PM2
+
+2. Reinstall if needed:
+   pm2-service-uninstall
+   pm2-service-install
+
+3. Set service to Automatic:
+   - Open services.msc
+   - Find "PM2" service
+   - Set Startup type: Automatic
+   - Start service
+
+
+HIGH MEMORY USAGE
+-----------------
+1. Check PM2 configuration in ecosystem.config.js:
+   max_memory_restart: '1G'
+
+2. Monitor with:
+   pm2 monit
+
+3. Restart if needed:
+   pm2 restart email-extractor
+
+4. Check Windows Task Manager for other processes
+
+
+UPDATING APPLICATION ON WINDOWS VPS
+================================================================================
+
+STEP 1: BUILD NEW VERSION LOCALLY
+----------------------------------
+   cd /Users/gdknmac/Documents/GitHub/jscemailextractor
+   cd frontend
+   npm run build --configuration production
+   cd ../backend
+   npm install --production
+
+
+STEP 2: BACKUP CURRENT VERSION
+-------------------------------
+On Windows VPS:
+   cd C:\inetpub
+   xcopy email-extractor email-extractor-backup /E /I /H
+
+
+STEP 3: UPLOAD NEW FILES
+-------------------------
+Upload updated files using FTP/Remote Desktop:
+   - backend\ folder
+   - frontend\dist\ folder
+
+
+STEP 4: RESTART APPLICATION
+----------------------------
+   pm2 restart email-extractor
+
+
+STEP 5: VERIFY UPDATE
+----------------------
+Check logs:
+   pm2 logs email-extractor
+
+Test in browser:
+   http://your-domain.com
+
+
+ROLLBACK IF NEEDED
+------------------
+If update fails:
+   cd C:\inetpub
+   xcopy email-extractor-backup\* email-extractor\ /E /Y
+   pm2 restart email-extractor
+
+
+BACKUP RECOMMENDATIONS
+================================================================================
+
+1. BACKUP .ENV FILE
+   copy C:\inetpub\email-extractor\backend\.env C:\Backups\email-extractor\.env
+
+2. BACKUP ENTIRE APPLICATION
+   xcopy C:\inetpub\email-extractor C:\Backups\email-extractor-<date> /E /I /H
+
+3. SCHEDULE AUTOMATIC BACKUPS
+   Use Windows Task Scheduler:
+   - Create Basic Task
+   - Trigger: Daily
+   - Action: Start a program
+   - Program: powershell.exe
+   - Arguments: -File C:\Scripts\backup-email-extractor.ps1
+
+Sample backup script (save as C:\Scripts\backup-email-extractor.ps1):
+   $source = "C:\inetpub\email-extractor"
+   $destination = "C:\Backups\email-extractor-$(Get-Date -Format 'yyyy-MM-dd')"
+   xcopy $source $destination /E /I /H
+
+
+PERFORMANCE OPTIMIZATION
+================================================================================
+
+1. Enable Windows Performance Mode:
+   - Control Panel → Power Options
+   - Select "High Performance"
+
+2. Disable unnecessary Windows services:
+   - services.msc
+   - Disable: Print Spooler, Windows Search (if not needed)
+
+3. Increase Node.js memory limit (if needed):
+   Edit ecosystem.config.js:
+   node_args: '--max-old-space-size=2048'
+
+4. Use SSD for application files if available
+
+5. Keep Windows updated:
+   Windows Update → Check for updates
+
+
+MONITORING AND LOGGING
+================================================================================
+
+VIEW APPLICATION LOGS
+---------------------
+PM2 logs:
+   pm2 logs email-extractor
+
+Log files location:
+   C:\inetpub\email-extractor\backend\logs\
+
+View specific log:
+   type C:\inetpub\email-extractor\backend\logs\combined.log
+
+View last 50 lines:
+   Get-Content C:\inetpub\email-extractor\backend\logs\combined.log -Tail 50
+
+Watch logs in real-time:
+   Get-Content C:\inetpub\email-extractor\backend\logs\combined.log -Wait -Tail 50
+
+
+WINDOWS EVENT VIEWER
+--------------------
+1. Open Event Viewer (eventvwr.msc)
+2. Windows Logs → Application
+3. Filter by "Node.js" or "PM2"
+
+
+SET UP EMAIL ALERTS (Optional)
+-------------------------------
+Use PM2 Plus (paid service):
+   pm2 link <secret> <public>
+   
+Provides:
+- Email alerts on crashes
+- Performance monitoring
+- Custom metrics
+
+
+SECURITY BEST PRACTICES
+================================================================================
+
+1. WINDOWS FIREWALL
+   - Only allow necessary ports (3000, 80, 443, 3389)
+   - Block all other inbound traffic
+
+2. WINDOWS UPDATES
+   - Enable automatic updates
+   - Check monthly for security patches
+
+3. ANTIVIRUS
+   - Keep Windows Defender enabled
+   - Exclude C:\inetpub\email-extractor from scanning (if needed)
+
+4. USER PERMISSIONS
+   - Don't run as Administrator
+   - Create limited user for application
+
+5. RDP SECURITY
+   - Change default RDP port from 3389
+   - Use strong passwords
+   - Enable Network Level Authentication
+
+6. SSL/HTTPS
+   - Always use HTTPS in production
+   - Redirect HTTP to HTTPS
+
+7. REGULAR BACKUPS
+   - Daily automatic backups
+   - Test restore procedures
+
+8. ENVIRONMENT VARIABLES
+   - Never commit .env to Git
+   - Use strong JWT_SECRET (64+ characters)
+
+9. MONITORING
+   - Set up uptime monitoring
+   - Monitor disk space
+   - Monitor memory usage
+
+
+COMMON WINDOWS-SPECIFIC ISSUES
+================================================================================
+
+NODE.JS PATH NOT FOUND
+-----------------------
+Add Node.js to PATH:
+1. System Properties → Environment Variables
+2. Edit System PATH
+3. Add: C:\Program Files\nodejs\
+4. Restart PowerShell
+
+
+PM2 COMMANDS NOT WORKING
+-------------------------
+Reinstall PM2 globally:
+   npm uninstall -g pm2
+   npm cache clean --force
+   npm install -g pm2
+
+
+APPLICATION SLOW ON WINDOWS
+----------------------------
+1. Check antivirus exclusions
+2. Disable Windows Defender real-time scanning for app folder
+3. Use SSD instead of HDD
+4. Increase server resources
+
+
+CANNOT WRITE TO LOGS DIRECTORY
+-------------------------------
+Set folder permissions:
+1. Right-click logs folder → Properties
+2. Security tab → Edit
+3. Add "Everyone" with Write permission
+4. Apply
+
+
+ADDITIONAL RESOURCES
+================================================================================
+
+Official Documentation:
+- Node.js Windows: https://nodejs.org/en/download/
+- PM2 Documentation: https://pm2.keymetrics.io/
+- IIS Documentation: https://docs.microsoft.com/iis/
+- Win-ACME: https://www.win-acme.com/
+
+Useful Tools:
+- WinSCP: https://winscp.net/
+- FileZilla: https://filezilla-project.org/
+- Notepad++: https://notepad-plus-plus.org/
+- Process Explorer: https://docs.microsoft.com/sysinternals/
+
+
+SUPPORT
+================================================================================
+
+For deployment issues or questions:
+
+Developer: Tuneer Mahatpure
+Email: mahatpuretuneer@gmail.com
+
+Include in support request:
+- Windows Server version
+- Node.js version (node --version)
+- PM2 logs (pm2 logs email-extractor)
+- Error messages
+- Steps to reproduce issue
+
+
+QUICK REFERENCE COMMANDS
+================================================================================
+
+START APPLICATION:
+   pm2 start C:\inetpub\email-extractor\backend\ecosystem.config.js
+
+STOP APPLICATION:
+   pm2 stop email-extractor
+
+RESTART APPLICATION:
+   pm2 restart email-extractor
+
+VIEW LOGS:
+   pm2 logs email-extractor
+
+CHECK STATUS:
+   pm2 status
+
+MONITOR:
+   pm2 monit
+
+SAVE PM2 PROCESS:
+   pm2 save
+
+DELETE FROM PM2:
+   pm2 delete email-extractor
+
+
+================================================================================
+END OF WINDOWS VPS DEPLOYMENT GUIDE
+================================================================================
+
+This guide provides complete instructions for deploying Email Extractor
+on Windows Server VPS. Follow steps in order for successful deployment.
+
+For updates or issues, contact: mahatpuretuneer@gmail.com
+================================================================================

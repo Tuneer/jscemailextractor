@@ -1,0 +1,158 @@
+<div class="email-reader-container">
+  <div class="header">
+    <div class="header-left">
+      <button class="btn-back" routerLink="/home">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M13 4L7 10L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back to Home
+      </button>
+    </div>
+    <div class="header-center">
+      <h1>Email Reader</h1>
+      <p class="subtitle">Search and select emails with attachments</p>
+    </div>
+    <div class="header-right">
+      <a [routerLink]="['/developer-contact']" class="dev-link">Developer Contact</a>
+    </div>
+  </div>
+
+  <div class="search-panel">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="senderEmail">Sender Email (Optional)</label>
+        <input 
+          type="email" 
+          id="senderEmail"
+          [(ngModel)]="senderEmail"
+          placeholder="sender@example.com"
+          [disabled]="loading || processing"
+          class="input-field"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="maxResults">Max Results</label>
+        <input 
+          type="number" 
+          id="maxResults"
+          [(ngModel)]="maxResults"
+          min="1"
+          max="100"
+          [disabled]="loading || processing"
+          class="input-field"
+        />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="searchQuery">Search Query</label>
+      <input 
+        type="text" 
+        id="searchQuery"
+        [(ngModel)]="searchQuery"
+        placeholder="has:attachment"
+        [disabled]="loading || processing"
+        class="input-field"
+      />
+      <div class="predefined-queries">
+        <button 
+          *ngFor="let q of predefinedQueries"
+          (click)="selectQuery(q.value)"
+          class="query-btn"
+          [disabled]="loading || processing"
+        >
+          {{ q.label }}
+        </button>
+      </div>
+    </div>
+
+    <button 
+      class="btn btn-primary" 
+      (click)="searchEmails()"
+      [disabled]="loading || processing"
+    >
+      <span *ngIf="!loading">Search Emails</span>
+      <span *ngIf="loading" class="loading-spinner"></span>
+    </button>
+  </div>
+
+  <div *ngIf="message" class="message" [ngClass]="'message-' + messageType">
+    <span class="message-icon">
+      <span *ngIf="messageType === 'success'">✓</span>
+      <span *ngIf="messageType === 'error'">✗</span>
+      <span *ngIf="messageType === 'info'">ℹ</span>
+    </span>
+    {{ message }}
+  </div>
+
+  <div *ngIf="emails.length > 0" class="results-panel">
+    <div class="results-header">
+      <h2>Email Results ({{ emails.length }})</h2>
+      <div class="action-buttons">
+        <button 
+          class="btn btn-secondary" 
+          (click)="clearSelection()"
+          [disabled]="selectedCount === 0 || processing"
+        >
+          Clear Selection
+        </button>
+        <button 
+          class="btn btn-primary" 
+          (click)="processSelected()"
+          [disabled]="selectedCount === 0 || processing"
+        >
+          <span *ngIf="!processing">Process Selected ({{ selectedCount }})</span>
+          <span *ngIf="processing" class="loading-spinner"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="email-table">
+        <thead>
+          <tr>
+            <th class="checkbox-col">
+              <input 
+                type="checkbox" 
+                [checked]="allSelected"
+                (change)="toggleSelectAll($event)"
+                [disabled]="processing"
+              />
+            </th>
+            <th>Subject</th>
+            <th>From</th>
+            <th>Date</th>
+            <th class="attachments-col">Attachments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let email of emails" [class.selected]="email.selected">
+            <td class="checkbox-col">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="email.selected"
+                [disabled]="processing"
+              />
+            </td>
+            <td class="subject-col">{{ email.subject }}</td>
+            <td class="from-col">{{ email.from }}</td>
+            <td class="date-col">{{ formatDate(email.date) }}</td>
+            <td class="attachments-col">
+              <span class="attachment-badge">{{ email.attachmentCount }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && emails.length === 0 && message" class="empty-state">
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="50" fill="#f0f0f0"/>
+      <path d="M40 50L60 65L80 50V80C80 82.7614 77.7614 85 75 85H45C42.2386 85 40 82.7614 40 80V50Z" stroke="#999" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M80 50L60 65L40 50" stroke="#999" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p>No emails to display</p>
+  </div>
+</div>

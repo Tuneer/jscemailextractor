@@ -1,0 +1,106 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="60" height="60" rx="12" fill="url(#gradient)"/>
+          <path d="M15 20L30 30L45 20V40C45 41.1046 44.1046 42 43 42H17C15.8954 42 15 41.1046 15 40V20Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M45 20L30 30L15 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="gradient" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#667eea"/>
+              <stop offset="1" stop-color="#764ba2"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1>Email Extractor</h1>
+      <p class="subtitle">Secure Login with OTP</p>
+    </div>
+
+    <div class="login-body">
+      <!-- Email Step -->
+      <div *ngIf="step === 'email'" class="form-step">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            [(ngModel)]="email" 
+            placeholder="Enter your email"
+            [disabled]="loading"
+            (keyup.enter)="requestOTP()"
+            class="input-field"
+          />
+        </div>
+
+        <button 
+          class="btn btn-primary" 
+          (click)="requestOTP()"
+          [disabled]="loading || !email"
+        >
+          <span *ngIf="!loading">Send OTP</span>
+          <span *ngIf="loading" class="loading-spinner"></span>
+        </button>
+
+        <p class="info-text">
+          You'll receive a 6-digit OTP code via email
+        </p>
+      </div>
+
+      <!-- OTP Step -->
+      <div *ngIf="step === 'otp'" class="form-step">
+        <div class="otp-info">
+          <p>OTP sent to <strong>{{ email }}</strong></p>
+          <button class="link-button" (click)="backToEmail()">Change email</button>
+        </div>
+
+        <div class="form-group">
+          <label for="otp">Enter OTP</label>
+          <input 
+            type="text" 
+            id="otp" 
+            [(ngModel)]="otp" 
+            placeholder="000000"
+            maxlength="6"
+            [disabled]="loading"
+            (keyup.enter)="verifyOTP()"
+            class="input-field otp-input"
+          />
+        </div>
+
+        <button 
+          class="btn btn-primary" 
+          (click)="verifyOTP()"
+          [disabled]="loading || otp.length !== 6"
+        >
+          <span *ngIf="!loading">Verify & Login</span>
+          <span *ngIf="loading" class="loading-spinner"></span>
+        </button>
+
+        <button 
+          class="btn btn-secondary" 
+          (click)="requestOTP()"
+          [disabled]="loading"
+        >
+          Resend OTP
+        </button>
+      </div>
+
+      <!-- Message Display -->
+      <div *ngIf="message" class="message" [ngClass]="'message-' + messageType">
+        <span class="message-icon">
+          <span *ngIf="messageType === 'success'">✓</span>
+          <span *ngIf="messageType === 'error'">✗</span>
+          <span *ngIf="messageType === 'info'">ℹ</span>
+        </span>
+        {{ message }}
+      </div>
+    </div>
+
+    <div class="login-footer">
+      <a [routerLink]="['/developer-contact']" class="developer-link">Developer Contact</a>
+      <p class="company-name">JSC Global Solutions PVT. LTD.</p>
+    </div>
+  </div>
+</div>

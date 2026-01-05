@@ -1,0 +1,117 @@
+<div class="home-container">
+  <nav class="navbar">
+    <div class="nav-content">
+      <div class="nav-brand">
+        <svg width="40" height="40" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="60" height="60" rx="12" fill="url(#gradient)"/>
+          <path d="M15 20L30 30L45 20V40C45 41.1046 44.1046 42 43 42H17C15.8954 42 15 41.1046 15 40V20Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M45 20L30 30L15 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="gradient" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#667eea"/>
+              <stop offset="1" stop-color="#764ba2"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>Email Extractor</span>
+      </div>
+      <div class="nav-user">
+        <a [routerLink]="['/developer-contact']" class="nav-link">Developer Contact</a>
+        <span class="user-email">{{ userEmail }}</span>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="hero-section">
+    <h1 class="hero-title">Welcome to Email Extractor</h1>
+    <p class="hero-subtitle">Extract and analyze email attachments with powerful tools</p>
+  </div>
+
+  <div class="features-container">
+    <div class="feature-card" routerLink="/email-reader">
+      <div class="feature-icon">
+        <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#E8EEFF"/>
+          <path d="M30 35L50 50L70 35V65C70 67.7614 67.7614 70 65 70H35C32.2386 70 30 67.7614 30 65V35Z" stroke="#667eea" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M70 35L50 50L30 35" stroke="#667eea" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="65" cy="35" r="8" fill="#764ba2"/>
+        </svg>
+      </div>
+      <h2 class="feature-title">Email Reader</h2>
+      <p class="feature-description">
+        Connect to Gmail, search emails with attachments, and select emails for processing. 
+        Filter by sender, use custom queries, and view email metadata.
+      </p>
+      <div class="feature-highlights">
+        <span class="highlight-badge">Gmail IMAP</span>
+        <span class="highlight-badge">Advanced Search</span>
+        <span class="highlight-badge">Attachment Detection</span>
+      </div>
+      <button class="btn-feature">
+        Open Email Reader
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="feature-card" routerLink="/email-results" [state]="{results: null}">
+      <div class="feature-icon">
+        <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#F0E8FF"/>
+          <rect x="25" y="30" width="50" height="45" rx="4" stroke="#764ba2" stroke-width="4"/>
+          <line x1="32" y1="42" x2="68" y2="42" stroke="#764ba2" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="52" x2="60" y2="52" stroke="#764ba2" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="62" x2="55" y2="62" stroke="#764ba2" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="68" cy="32" r="8" fill="#667eea"/>
+        </svg>
+      </div>
+      <h2 class="feature-title">Email Results</h2>
+      <p class="feature-description">
+        View extracted data from email attachments. Parse Excel/CSV files, display data in interactive tables, 
+        and export results to CSV format.
+      </p>
+      <div class="feature-highlights">
+        <span class="highlight-badge">Excel Parser</span>
+        <span class="highlight-badge">Data Tables</span>
+        <span class="highlight-badge">CSV Export</span>
+      </div>
+      <button class="btn-feature">
+        View Results
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-card">
+      <h3>Production-Grade Email Pipeline</h3>
+      <p>
+        This application implements a robust email extraction system using Gmail IMAP with advanced 
+        X-GM-RAW search capabilities, enabling sophisticated filtering and processing.
+      </p>
+    </div>
+    <div class="info-card">
+      <h3>Smart Attachment Processing</h3>
+      <p>
+        Automatically discovers all unique columns across rows, handles empty cells gracefully, 
+        and provides row/column analytics for downstream processing.
+      </p>
+    </div>
+    <div class="info-card">
+      <h3>Modern Angular Architecture</h3>
+      <p>
+        Built with Angular 21 standalone components, providing a responsive UI with clean separation 
+        between frontend and backend for portability and reusability.
+      </p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Developed by Tuneer Mahatpure</p>
+    <p>Contact: mahatpuretuneer@gmail.com</p>
+  </footer>
+</div>

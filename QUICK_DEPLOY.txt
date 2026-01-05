@@ -1,0 +1,101 @@
+================================================================================
+QUICK DEPLOYMENT REFERENCE - Email Extractor
+================================================================================
+
+LOCAL BUILD
+-----------
+./build-production.sh
+
+This creates: frontend/dist/frontend/browser/
+
+
+UPLOAD TO VPS
+-------------
+scp -r backend/ user@vps-ip:/var/www/email-extractor/
+scp -r frontend/dist/ user@vps-ip:/var/www/email-extractor/frontend/
+
+
+ON VPS - FIRST TIME
+-------------------
+cd /var/www/email-extractor/backend
+cp .env.example .env
+nano .env  # Add your credentials
+npm install --production
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup  # Follow instructions
+
+
+ON VPS - UPDATES
+----------------
+cd /var/www/email-extractor/backend
+pm2 restart email-extractor
+
+
+ACCESS APPLICATION
+------------------
+Without Nginx:  http://your-vps-ip:3000
+With Nginx:     http://your-domain.com
+
+
+COMMON COMMANDS
+---------------
+pm2 status                    # Check if running
+pm2 logs email-extractor      # View logs
+pm2 restart email-extractor   # Restart app
+pm2 monit                     # Monitor resources
+
+
+FOLDER STRUCTURE ON VPS
+-----------------------
+/var/www/email-extractor/
+├── backend/
+│   ├── .env          ← Your credentials
+│   ├── server.js
+│   └── ...
+└── frontend/
+    └── dist/
+        └── frontend/
+            └── browser/  ← Built Angular files
+
+
+HOW IT WORKS
+------------
+1. Backend server (server.js) starts on port 3000
+2. Serves API routes: /api/*
+3. Serves Angular static files for all other routes
+4. Single process, single port, everything unified!
+
+
+KEY POINTS
+----------
+✅ ONE server process serves everything
+✅ Frontend built files in: frontend/dist/frontend/browser/
+✅ Backend configured to serve those files
+✅ No CORS issues (same origin)
+✅ Perfect for VPS hosting
+
+
+NGINX CONFIG (Optional)
+-----------------------
+server {
+    listen 80;
+    server_name your-domain.com;
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+}
+
+
+TROUBLESHOOTING
+---------------
+App won't start:  Check .env exists and has correct values
+Can't access:     Check firewall (ufw allow 3000)
+OTP not working:  Verify Gmail App Password in .env
+IMAP errors:      Enable IMAP in Gmail settings
+
+
+Contact: Tuneer Mahatpure (mahatpuretuneer@gmail.com)
+================================================================================

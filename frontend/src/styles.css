@@ -1,0 +1,173 @@
+/* ===================================================================
+   THEME CONFIGURATION - CHANGE COLORS HERE
+   =================================================================== */
+:root {
+  /* Primary Theme Colors - Change these to update entire app theme */
+  --primary-color: #ff6b35;           /* Main brand color (Orange) */
+  --primary-dark: #f7931e;            /* Darker shade for gradients */
+  --primary-light: #ff8555;           /* Lighter shade for hover states */
+  
+  /* Gradient - Used in buttons, headers, titles */
+  --primary-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  
+  /* Light backgrounds with theme color */
+  --primary-light-bg: #fff5f0;        /* Very light background */
+  --primary-lighter-bg: #ffe8d9;      /* Light background for badges */
+  --primary-lightest-bg: #fff9f6;     /* Lightest background for hover */
+  
+  /* Shadow colors - based on primary color */
+  --primary-shadow-light: rgba(255, 107, 53, 0.1);   /* Light shadow */
+  --primary-shadow-medium: rgba(255, 107, 53, 0.2);  /* Medium shadow */
+  --primary-shadow-strong: rgba(255, 107, 53, 0.4);  /* Strong shadow */
+  
+  /* Neutral Colors - Usually don't need to change */
+  --background-main: #f8f9fa;
+  --background-card: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-color: #e0e0e0;
+  --border-light: #f0f0f0;
+  
+  /* Status Colors */
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --success-border: #c3e6cb;
+  
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
+  
+  --info-bg: #d1ecf1;
+  --info-text: #0c5460;
+  --info-border: #bee5eb;
+}
+
+/* ===================================================================
+   QUICK THEME PRESETS - Uncomment one to switch themes instantly
+   =================================================================== */
+
+/* Orange Theme (Current) - Already active above */
+
+/* Purple Theme - Uncomment to switch
+:root {
+  --primary-color: #667eea;
+  --primary-dark: #764ba2;
+  --primary-light: #7e8ef5;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-light-bg: #e8eeff;
+  --primary-lighter-bg: #f0e8ff;
+  --primary-lightest-bg: #f8f9ff;
+  --primary-shadow-light: rgba(102, 126, 234, 0.1);
+  --primary-shadow-medium: rgba(102, 126, 234, 0.2);
+  --primary-shadow-strong: rgba(102, 126, 234, 0.4);
+}
+*/
+
+/* Blue Theme - Uncomment to switch
+:root {
+  --primary-color: #0066cc;
+  --primary-dark: #0052a3;
+  --primary-light: #3385d6;
+  --primary-gradient: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+  --primary-light-bg: #e6f2ff;
+  --primary-lighter-bg: #cce5ff;
+  --primary-lightest-bg: #f0f8ff;
+  --primary-shadow-light: rgba(0, 102, 204, 0.1);
+  --primary-shadow-medium: rgba(0, 102, 204, 0.2);
+  --primary-shadow-strong: rgba(0, 102, 204, 0.4);
+}
+*/
+
+/* Green Theme - Uncomment to switch
+:root {
+  --primary-color: #28a745;
+  --primary-dark: #1e7e34;
+  --primary-light: #48c464;
+  --primary-gradient: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  --primary-light-bg: #e8f5e9;
+  --primary-lighter-bg: #c8e6c9;
+  --primary-lightest-bg: #f1f8f4;
+  --primary-shadow-light: rgba(40, 167, 69, 0.1);
+  --primary-shadow-medium: rgba(40, 167, 69, 0.2);
+  --primary-shadow-strong: rgba(40, 167, 69, 0.4);
+}
+*/
+
+/* Red Theme - Uncomment to switch
+:root {
+  --primary-color: #dc3545;
+  --primary-dark: #c82333;
+  --primary-light: #e4606d;
+  --primary-gradient: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  --primary-light-bg: #ffe6e6;
+  --primary-lighter-bg: #ffcccc;
+  --primary-lightest-bg: #fff5f5;
+  --primary-shadow-light: rgba(220, 53, 69, 0.1);
+  --primary-shadow-medium: rgba(220, 53, 69, 0.2);
+  --primary-shadow-strong: rgba(220, 53, 69, 0.4);
+}
+*/
+
+/* ===================================================================
+   GLOBAL STYLES
+   =================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--background-main);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Global Utilities */
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+
+.p-1 { padding: 0.5rem; }
+.p-2 { padding: 1rem; }
+.p-3 { padding: 1.5rem; }
+.p-4 { padding: 2rem; }

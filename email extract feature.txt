@@ -1,0 +1,521 @@
+================================================================================
+EMAIL EXTRACT FEATURE - REQUIREMENTS & DESIGN DOCUMENT
+================================================================================
+
+Document Name: email extract feature.txt
+Feature Name: Email Reader & Email Results Module
+Scope: Standalone project containing ONLY email reading, attachment extraction,
+       Excel parsing, data display, and CSV export features.
+Version: 1.0
+Last Updated: December 21, 2025
+
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+This document defines a standalone "Email Extract Feature" project that
+includes:
+
+- Email Reader: Connects to Gmail, searches emails, lists results, and lets
+  users select emails with attachments.
+- Email Results: Downloads attachments (Excel/CSV), parses them, and displays
+  the extracted data in a rich Angular table with CSV export.
+
+The original JSC Coupon Program includes additional modules (scraper, database,
+matching, barcode lookup). This new project focuses ONLY on the email
+extraction and result visualization flow so it can be reused or integrated into
+other systems independently.
+
+
+================================================================================
+2. SCOPE AND GOALS
+================================================================================
+
+IN-SCOPE (MUST HAVE):
+- Gmail connection (IMAP-based) using a configured Gmail account
+- Email search with sender filter, query, and max results
+- Listing emails with metadata and attachment indicators
+- Selecting one or more emails to process
+- Downloading attachments from selected emails
+- Parsing Excel/CSV attachments into structured data
+- Displaying parsed rows and columns in Angular tables
+- Showing row and column counts for each attachment
+- Exporting parsed data as CSV files
+- Basic configuration (credentials, limits, defaults)
+- Error handling and user feedback
+
+OUT OF SCOPE (NOT INCLUDED):
+- Web scraping
+- Database persistence (MongoDB models, saving emails/products)
+- Matching coupons to products
+- Barcode lookup and product catalog
+- Authentication/authorization beyond basic admin login (optional)
+
+PRIMARY GOAL:
+- Provide a clean, reusable, production-ready module that reads emails,
+  extracts attachment data, and exposes it through a modern UI and a simple
+  REST API.
+
+
+================================================================================
+3. SYSTEM ARCHITECTURE (STANDALONE VERSION)
+================================================================================
+
+Architecture: Two-tier web application
+
+1) FRONTEND (Angular Application)
+   - Email Reader Component
+   - Email Results Component
+   - Shared Email Service (HTTP API client)
+
+2) BACKEND (Node.js + Express Server)
+   - Gmail IMAP Service
+   - Email Processing Route (list emails, process selected emails)
+   - Attachment Parsing (Excel/CSV)
+
+No database is required in this standalone version; all data is processed
+in-memory per request.
+
+
+================================================================================
+4. TECHNOLOGY STACK
+================================================================================
+
+FRONTEND:
+- Angular 21 (standalone components)
+- TypeScript 5.x
+- Angular Router
+- HttpClient
+- CSS for styling (no external CSS framework required)
+
+BACKEND:
+- Node.js (LTS recommended)
+- Express.js 4.x
+- imap (or node-imap) for Gmail IMAP access
+- mailparser for MIME parsing
+- XLSX (SheetJS) for Excel/CSV parsing
+- fs/promises for filesystem operations
+- path for file path utilities
+
+BUILD AND DEV TOOLS:
+- npm for dependency management
+- Angular CLI for dev server and build
+
+
+================================================================================
+5. CORE FEATURE 1: EMAIL READER
+================================================================================
+
+5.1 OBJECTIVE
+-------------
+Provide a UI and backend API to search Gmail, list emails with attachments, and
+select emails for processing.
+
+5.2 USER FLOW
+-------------
+1) User opens Email Reader page.
+2) User enters:
+   - Sender Email (optional but recommended; e.g., coupon sender address)
+   - Search Query (Gmail-style; e.g., "has:attachment", "newer_than:7d")
+   - Max Results (e.g., 50)
+3) User clicks "Search Emails".
+4) System authenticates to Gmail (IMAP) and searches emails with attachments.
+5) Email list appears with subject, from, date, and attachment count.
+6) User selects one or more emails via checkboxes.
+7) User clicks "Process Selected Emails".
+8) System processes the selected emails and navigates to Email Results.
+
+5.3 FRONTEND REQUIREMENTS (EMAIL READER UI)
+-------------------------------------------
+Component: EmailReaderComponent
+
+Inputs:
+- Sender Email (text input)
+- Search Query (text input with optional predefined options)
+- Max Results (numeric input)
+
+Buttons:
+- "Search Emails" – triggers email search via backend
+- "Process Selected Emails" – processes selected emails
+- Optional: "Clear Selection" – clears all checkboxes
+
+Email List Display:
+- Columns:
+  - Checkbox (select email)
+  - Subject
+  - From
+  - Date
+  - Attachments (count)
+- Each row shows whether attachments exist.
+- Multi-select is supported.
+
+States and Messages:
+- Loading indicator while searching or processing
+- Error message if API fails
+- Info message when no emails are found
+- Success message on completed operations
+
+Navigation:
+- On successful processing, navigate to Email Results page and pass the
+  processed data via router state.
+
+5.4 BACKEND REQUIREMENTS (EMAIL SEARCH)
+---------------------------------------
+Endpoint: POST /api/gmail/emails
+
+Request Body:
+- query: string (Gmail search query; default: "has:attachment")
+- senderEmail: string (optional; filter emails from specific sender)
+- maxResults: number (default: 50)
+
+Behavior:
+- Ensure IMAP connection to Gmail using stored credentials.
+- Build search criteria:
+  - If senderEmail is provided, use X-GM-RAW with from:senderEmail
+  - Always include has:attachment
+  - Append user query if provided
+- Search IMAP inbox and fetch headers and structure only (FAST mode).
+- Detect attachments via message structure.
+
+Response:
+- success: boolean
+- emails: array of objects
+  - id: numeric sequence number
+  - uid: IMAP UID (stable identifier)
+  - subject: string
+  - from: string
+  - date: ISO string
+  - hasAttachments: boolean
+  - attachmentCount: number
+- count: number of emails returned
+- error: optional error message
+
+Error Handling:
+- If not authenticated or IMAP fails, return success: false with error message.
+- If no results, return success: true with empty emails array.
+
+5.5 GMAIL IMAP SERVICE (BACKEND)
+--------------------------------
+Service: GmailIMAP
+
+Responsibilities:
+- Manage IMAP connection lifecycle.
+- Provide methods:
+  - connect(email, appPassword)
+  - disconnect()
+  - searchEmails(criteria, maxResults)
+  - getFullEmail(uid)
+  - downloadAttachments(email, targetDir)
+
+Key Implementation Details:
+- Use connection Promise to avoid multiple parallel connects.
+- Add logging for connection and search criteria.
+- Use buildSearchCriteria(criteria):
+  - For sender filter: ['X-GM-RAW', `from:${criteria.from}`]
+  - For attachments: ['X-GM-RAW', 'has:attachment']
+- For searchEmails:
+  - Open INBOX
+  - Run search
+  - If results exist, fetch headers and struct
+  - Build a simple email object list
+
+Security:
+- Use app-specific password instead of real account password.
+- Store credentials in a local JSON file or environment variables.
+
+
+================================================================================
+6. CORE FEATURE 2: EMAIL RESULTS (ATTACHMENT DATA)
+================================================================================
+
+6.1 OBJECTIVE
+-------------
+After processing selected emails, show a rich view of all attachment data,
+especially Excel/CSV contents, with export capabilities.
+
+6.2 USER FLOW
+-------------
+1) User selects emails in Email Reader and clicks "Process Selected Emails".
+2) Backend downloads attachments and parses Excel/CSV files.
+3) Backend returns structured attachment data in a single response.
+4) Frontend navigates to Email Results page, passing this data.
+5) User sees:
+   - Email cards (subject, from, date, attachment count)
+   - Attachment cards for each file with size, row count, column count
+6) User clicks "View Data" on an attachment card.
+7) A modal opens showing:
+   - File info (size, type, rows, columns)
+   - Data table with all columns and rows
+   - "Export CSV" button for that attachment
+8) User can also click "Export All Data" to download CSV for each attachment.
+
+6.3 BACKEND REQUIREMENTS (EMAIL PROCESSING)
+-------------------------------------------
+Endpoint: POST /api/gmail/process
+
+Request Body:
+- emailIds: array of UIDs (strings or numbers)
+- senderEmail: optional (for logging or additional filtering)
+
+Behavior:
+- Ensure IMAP connection.
+- For each UID in emailIds:
+  - Fetch full email (headers + body + attachments).
+  - Determine attachments and save them to a temp folder.
+  - For each attachment file:
+    - If Excel/CSV → parse into rows and headers.
+    - If other type → return file info only (filename and size).
+- Build processed results array.
+
+Response:
+- success: boolean
+- processed: array of processed emails
+  - id: email id
+  - uid: email UID
+  - subject: string
+  - from: string
+  - date: ISO string
+  - attachments: array
+    - filename: string
+    - contentType: string
+    - size: number (bytes)
+    - data: array of row objects
+    - headers: array of column names
+    - columnCount: number
+    - rowCount: number
+- count: number of processed emails
+- total: total requested email IDs
+- failed: number of emails that could not be processed
+
+6.4 ATTACHMENT PARSING (EXCEL/CSV)
+----------------------------------
+Function: parseExcelFile(filePath)
+
+Behavior:
+- Use XLSX.readFile(filePath) to load workbook.
+- Use first sheet by default.
+- Convert sheet to JSON:
+  - XLSX.utils.sheet_to_json(worksheet, {
+      raw: false,
+      defval: ''
+    });
+- If no rows → return empty headers and rows.
+- Compute all unique headers across all rows (not just first row).
+- Set:
+  - headers: array of unique column names
+  - rows: full data array
+  - columnCount: headers.length
+  - rowCount: rows.length
+
+Non-Excel Files:
+- For PDFs or other binary files:
+  - Return headers: ["Filename", "Size"]
+  - rows: [{ Filename: fileName, Size: bytes }]
+  - columnCount: 2
+  - rowCount: 1
+
+6.5 FRONTEND REQUIREMENTS (EMAIL RESULTS UI)
+--------------------------------------------
+Component: EmailResultsComponent
+
+Inputs:
+- Receives navigation state: { results: ProcessResponse }
+- processedEmails: array of processed email objects
+- selectedAttachment: currently viewed attachment (or null)
+- totalRecords: sum of all rowCount for all attachments
+
+Layout:
+- Header:
+  - Title: "Email Attachment Data" or branded title
+  - Subtitle: "Extracted data from X email(s) - Y total records"
+
+- Navigation:
+  - "Back to Email Reader" button
+  - "Export All Data" button (when totalRecords > 0)
+
+- Email List:
+  - For each processed email:
+    - Show subject, from, date, attachment count
+    - Show attachment cards
+
+- Attachment Cards:
+  - Icon based on contentType (Excel, PDF, etc.)
+  - Filename (ellipsized if long)
+  - Size (formatted, e.g., KB/MB)
+  - Row count
+  - Column count
+  - "View Data" button (opens modal)
+
+- Modal (Attachment Detail View):
+  - Header:
+    - Filename
+    - Buttons: "Export CSV", "Close"
+  - Body:
+    - File size, type, rows, columns
+    - Data table:
+      - Row index column (#)
+      - All column headers (from headers or computed)
+      - All rows
+    - "No data" message if no rows
+
+6.6 CSV EXPORT REQUIREMENTS
+---------------------------
+- CSV export must:
+  - Use all headers returned by backend or computed from data.
+  - Use consistent header order.
+  - Quote all values and escape internal quotes.
+  - Use newline-separated rows.
+
+- Export Single Attachment:
+  - Button in modal: "Export CSV"
+  - Filename pattern: <original_name>_data.csv
+
+- Export All Attachments:
+  - For each attachment with data:
+    - Trigger CSV download using the same logic.
+
+
+================================================================================
+7. ERROR HANDLING & EDGE CASES
+================================================================================
+
+7.1 FRONTEND ERROR STATES
+-------------------------
+- If email search fails:
+  - Show message: "Failed to load emails: <reason>"
+- If no emails found:
+  - Show guidance: "No emails found. Try changing sender or search query."
+- If processing fails:
+  - Show message: "Processing failed: <reason>"
+- If no attachments have data:
+  - Show message in Email Results: "No data could be extracted from the
+    selected attachments."
+
+7.2 BACKEND ERROR HANDLING
+--------------------------
+- IMAP connection errors:
+  - Log error and return success: false with a clear message.
+- Parsing errors:
+  - Log error per file.
+  - Skip problematic file but continue others.
+- Unexpected errors:
+  - Return HTTP 500 with success: false and error message.
+
+7.3 EDGE CASES
+---------------
+- Emails without attachments:
+  - They should either be filtered out or shown with 0 attachments.
+- Attachments that are not Excel/CSV:
+  - Show as file info only; no data table.
+- Empty Excel files:
+  - Return 0 rows, 0 columns, with a clear message.
+- Very large Excel files:
+  - Consider max row and column limits or pagination on the UI.
+
+
+================================================================================
+8. CONFIGURATION & SETUP
+================================================================================
+
+8.1 BACKEND CONFIGURATION
+-------------------------
+Configuration can be provided via:
+- Environment variables, or
+- A JSON config file (e.g., gmail-credentials.json, email-config.json)
+
+Required Settings:
+- gmail.email: Gmail account address
+- gmail.appPassword: App-specific password
+
+Optional Settings:
+- defaultSenderEmail: Default filter sender
+- defaultMaxResults: Default limit for emails
+- downloadDirectory: Folder where attachments are saved
+
+8.2 FRONTEND CONFIGURATION
+--------------------------
+- API base URL (e.g., http://localhost:3000/api)
+- Default search query (e.g., "has:attachment")
+- Default sender email (can be prefilled)
+- Default max results (e.g., 50)
+
+
+================================================================================
+9. PROJECT STRUCTURE (STANDALONE VERSION)
+================================================================================
+
+A minimal standalone project containing only Email Reader and Email Results
+could have the following structure:
+
+/email-extract-feature/
+│
+├── backend/
+│   ├── server.js                # Express server entry
+│   ├── routes/
+│   │   └── gmail-routes.js      # /api/gmail endpoints
+│   └── services/
+│       └── gmail-imap.js        # IMAP service and parsing helpers
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── email-reader/
+│   │   │   │   ├── email-reader.component.ts
+│   │   │   │   ├── email-reader.component.html
+│   │   │   │   └── email-reader.component.css
+│   │   │   ├── email-results/
+│   │   │   │   ├── email-results.component.ts
+│   │   │   │   ├── email-results.component.html
+│   │   │   │   └── email-results.component.css
+│   │   │   ├── services/
+│   │   │   │   └── email.service.ts
+│   │   │   ├── app.routes.ts
+│   │   │   └── app.component.*
+│   │   ├── index.html
+│   │   └── styles.css
+│   └── angular.json
+│
+├── config/
+│   └── gmail-credentials.json   # Email account configuration
+│
+└── package.json                  # Dependencies and scripts
+
+
+================================================================================
+10. BUILD & RUN INSTRUCTIONS (STANDALONE)
+================================================================================
+
+BACKEND:
+- Install dependencies: npm install
+- Run server: node backend/server.js
+- Server will listen on: http://localhost:3000
+
+FRONTEND:
+- Navigate to frontend folder
+- Install dependencies: npm install
+- Start dev server: npm run dev or ng serve
+- App available at: http://localhost:4200
+
+
+================================================================================
+11. RESUME-ORIENTED HIGHLIGHTS FOR THIS FEATURE
+================================================================================
+
+- Implemented a **production-grade email extraction pipeline** using Gmail IMAP
+  with advanced X-GM-RAW search, enabling robust filtering by sender,
+  attachments, and custom queries.
+- Built a **full Excel/CSV parsing engine** using SheetJS that automatically
+  discovers all unique columns across rows, handles empty cells gracefully, and
+  exposes row/column counts for downstream processing.
+- Designed a **modern Angular 21 UI** with standalone components to provide a
+  responsive email reader and a rich data table viewer, including CSV export
+  and attachment-level analytics.
+- Architected a **clean separation** between frontend (Angular) and backend
+  (Node + Express), making the email extract feature portable and reusable
+  across multiple larger systems.
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

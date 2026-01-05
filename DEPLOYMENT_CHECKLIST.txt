@@ -1,0 +1,267 @@
+================================================================================
+DEPLOYMENT CHECKLIST - Email Extractor to VPS
+================================================================================
+
+PRE-DEPLOYMENT (On Local Machine)
+================================================================================
+
+□ Verify application works locally
+  - Backend runs: cd backend && npm start
+  - Frontend runs: cd frontend && ng serve
+  - Login works with OTP
+  - Email search works
+  - Data export works
+
+□ Build for production
+  - Run: ./build-production.sh
+  - Verify frontend/dist/frontend/browser/ exists
+  - Check for build errors
+
+□ Test production build locally
+  - cd backend && npm start
+  - Open: http://localhost:3000
+  - Verify Angular app loads
+  - Test all features
+
+□ Prepare credentials
+  - Gmail App Password ready
+  - JWT secret generated (random 64+ chars)
+  - SMTP credentials verified
+
+
+VPS SETUP
+================================================================================
+
+□ Server requirements met
+  - Node.js v18+ installed
+  - PM2 installed globally
+  - Nginx installed (optional)
+  - Firewall configured
+
+□ Create application directory
+  - mkdir -p /var/www/email-extractor
+  - Set proper permissions
+
+□ Upload files to VPS
+  - backend/ folder
+  - frontend/dist/ folder
+  - .env file configured
+
+
+CONFIGURATION ON VPS
+================================================================================
+
+□ Environment file (.env) created
+  - PORT=3000
+  - NODE_ENV=production
+  - JWT_SECRET set
+  - SMTP credentials set
+  - GMAIL credentials set
+  - OTP_EXPIRY_MINUTES set
+
+□ Install backend dependencies
+  - cd /var/www/email-extractor/backend
+  - npm install --production
+
+□ Create logs directory
+  - mkdir -p /var/www/email-extractor/backend/logs
+
+
+START APPLICATION
+================================================================================
+
+□ Start with PM2
+  - cd /var/www/email-extractor/backend
+  - pm2 start ecosystem.config.js
+  - pm2 save
+  - pm2 startup (follow instructions)
+
+□ Verify application running
+  - pm2 status
+  - pm2 logs email-extractor
+  - curl http://localhost:3000
+
+□ Test in browser
+  - http://your-vps-ip:3000
+  - Login page loads
+  - Can login with OTP
+  - Can access features
+
+
+NGINX REVERSE PROXY (Optional)
+================================================================================
+
+□ Configure Nginx
+  - Create site config in /etc/nginx/sites-available/
+  - Symlink to sites-enabled/
+  - Test config: sudo nginx -t
+  - Restart: sudo systemctl restart nginx
+
+□ Update DNS
+  - Point domain A record to VPS IP
+  - Wait for DNS propagation
+
+□ Test domain access
+  - http://your-domain.com
+
+
+SSL CERTIFICATE (Recommended)
+================================================================================
+
+□ Install Certbot
+  - sudo apt install certbot python3-certbot-nginx
+
+□ Obtain certificate
+  - sudo certbot --nginx -d your-domain.com
+
+□ Verify HTTPS
+  - https://your-domain.com
+  - Check certificate validity
+
+□ Test auto-renewal
+  - sudo certbot renew --dry-run
+
+
+SECURITY HARDENING
+================================================================================
+
+□ Firewall configured
+  - sudo ufw allow 22 (SSH)
+  - sudo ufw allow 80 (HTTP)
+  - sudo ufw allow 443 (HTTPS)
+  - sudo ufw enable
+
+□ File permissions set
+  - chmod 600 backend/.env
+  - chown -R www-data:www-data /var/www/email-extractor
+
+□ Security updates applied
+  - sudo apt update && sudo apt upgrade -y
+
+□ Non-root user created
+  - Application runs as limited user
+  - PM2 runs as application user
+
+
+TESTING & VERIFICATION
+================================================================================
+
+□ Full application test
+  - Login with email/OTP
+  - Search emails
+  - Process emails
+  - View results
+  - Export CSV
+
+□ Performance check
+  - Application responds quickly
+  - No memory leaks (pm2 monit)
+  - Logs show no errors
+
+□ Email functionality
+  - OTP emails received
+  - Gmail IMAP works
+  - Attachments processed
+
+□ Error handling
+  - 404 pages work
+  - API errors handled gracefully
+  - Frontend errors don't crash app
+
+
+POST-DEPLOYMENT
+================================================================================
+
+□ Documentation updated
+  - Server IP/domain documented
+  - Credentials stored securely
+  - Access information shared with team
+
+□ Monitoring setup
+  - PM2 monitoring active
+  - Log rotation configured
+  - Uptime monitoring (optional)
+
+□ Backup plan
+  - .env file backed up
+  - Database backup (if applicable)
+  - Application files backed up
+
+□ Update procedures documented
+  - How to deploy updates
+  - Rollback procedure
+  - Contact information
+
+
+TROUBLESHOOTING COMMANDS
+================================================================================
+
+Check application status:
+  pm2 status
+  pm2 logs email-extractor
+  pm2 monit
+
+Check ports:
+  netstat -tuln | grep 3000
+  sudo lsof -i :3000
+
+Check processes:
+  ps aux | grep node
+  pm2 list
+
+Restart services:
+  pm2 restart email-extractor
+  sudo systemctl restart nginx
+
+View logs:
+  tail -f /var/www/email-extractor/backend/logs/combined.log
+  tail -f /var/log/nginx/error.log
+
+
+ROLLBACK PLAN
+================================================================================
+
+If deployment fails:
+
+□ Stop current version
+  - pm2 stop email-extractor
+
+□ Restore previous version
+  - Replace backend/ folder
+  - Replace frontend/dist/ folder
+
+□ Restart application
+  - pm2 restart email-extractor
+
+□ Verify functionality
+  - Test login and core features
+
+
+SUCCESS CRITERIA
+================================================================================
+
+✅ Application accessible via domain/IP
+✅ Login works (OTP received and verified)
+✅ Email search retrieves results
+✅ Email processing works
+✅ Data export downloads CSV
+✅ No errors in PM2 logs
+✅ SSL certificate valid (if using HTTPS)
+✅ Application survives server restart
+✅ All features work as in development
+
+
+FINAL NOTES
+================================================================================
+
+- Keep credentials secure
+- Monitor logs regularly
+- Update dependencies monthly
+- Test backups quarterly
+- Document any custom configurations
+- Share access details with team securely
+
+
+Contact: Tuneer Mahatpure (mahatpuretuneer@gmail.com)
+
+================================================================================
