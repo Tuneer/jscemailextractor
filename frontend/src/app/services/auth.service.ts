@@ -7,7 +7,7 @@ import { LoginResponse, OTPRequest, OTPVerification } from '../models/email.mode
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = 'http://localhost:3001/api/auth';
   private tokenKey = 'auth_token';
   private userKey = 'user_email';
   

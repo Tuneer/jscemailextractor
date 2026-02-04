@@ -15,10 +15,13 @@
         </svg>
         <span>Email Extractor</span>
       </div>
-      <div class="nav-user">
-        <a [routerLink]="['/developer-contact']" class="nav-link">Developer Contact</a>
-        <span class="user-email">{{ userEmail }}</span>
-        <button class="btn-logout" (click)="logout()">Logout</button>
+      <div class="nav-controls">
+        <app-theme-toggle></app-theme-toggle>
+        <div class="nav-user">
+          <a [routerLink]="['/developer-contact']" class="nav-link">Developer Contact</a>
+          <span class="user-email">{{ userEmail }}</span>
+          <button class="btn-logout" (click)="logout()">Logout</button>
+        </div>
       </div>
     </div>
   </nav>
@@ -79,6 +82,36 @@
       </div>
       <button class="btn-feature">
         View Results
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="feature-card" (click)="navigateToFormattedExcel()">
+      <div class="feature-icon">
+        <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#FFE8E8"/>
+          <path d="M30 35H70V65H30V35Z" fill="#FF6B6B" stroke="#FF4757" stroke-width="2"/>
+          <rect x="35" y="40" width="30" height="20" rx="2" fill="white"/>
+          <line x1="40" y1="45" x2="60" y2="45" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round"/>
+          <line x1="40" y1="50" x2="55" y2="50" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round"/>
+          <line x1="40" y1="55" x2="50" y2="55" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="65" cy="35" r="6" fill="#FFA502"/>
+        </svg>
+      </div>
+      <h2 class="feature-title">Formatted Excel Export</h2>
+      <p class="feature-description">
+        Export Excel files with custom formatting. Store data in database and apply predefined templates
+        with custom headers for different merchants.
+      </p>
+      <div class="feature-highlights">
+        <span class="highlight-badge">Database Storage</span>
+        <span class="highlight-badge">Template System</span>
+        <span class="highlight-badge">Custom Headers</span>
+      </div>
+      <button class="btn-feature">
+        Export Formatted Excel
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

@@ -41,7 +41,7 @@ router.post('/request-otp', async (req, res) => {
 });
 
 // Verify OTP and login
-router.post('/verify-otp', (req, res) => {
+router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -59,8 +59,8 @@ router.post('/verify-otp', (req, res) => {
       return res.status(400).json(result);
     }
 
-    // Generate JWT token
-    const token = authService.generateToken(email);
+    // Generate JWT token with login history
+    const token = await authService.generateToken(email, req.ip, req.get('User-Agent'));
 
     res.json({
       success: true,

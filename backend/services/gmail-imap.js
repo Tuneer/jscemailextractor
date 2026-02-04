@@ -3,6 +3,7 @@ const { simpleParser } = require('mailparser');
 const fs = require('fs').promises;
 const path = require('path');
 const XLSX = require('xlsx');
+const dbService = require('./db-service');
 
 class GmailIMAPService {
   constructor() {
@@ -228,6 +229,20 @@ class GmailIMAPService {
         try {
           const email = await this.getFullEmail(uid);
           
+          let emailDbId = null;
+          try {
+            // Save email metadata to database
+            emailDbId = await dbService.saveEmailMetadata({
+              uid: uid,
+              subject: email.subject || 'No Subject',
+              from: email.from ? email.from.text : 'Unknown',
+              date: email.date ? email.date.toISOString() : new Date().toISOString()
+            });
+          } catch (dbError) {
+            console.warn('Warning: Could not save email metadata to database:', dbError.message);
+            // Continue processing even if database save fails
+          }
+
           const emailData = {
             id: uid,
             uid: uid,
@@ -261,6 +276,23 @@ class GmailIMAPService {
                 attachmentData.headers = parsedData.headers;
                 attachmentData.columnCount = parsedData.columnCount;
                 attachmentData.rowCount = parsedData.rowCount;
+
+                if (emailDbId) { // Only save to database if email was successfully saved to database
+                  try {
+                    // Save attachment to database
+                    const attachmentDbId = await dbService.saveAttachment({
+                      filename: filename,
+                      contentType: attachment.contentType,
+                      size: attachment.size
+                    }, emailDbId);
+
+                    // Save Excel data to database
+                    await dbService.saveExcelData(parsedData, attachmentDbId);
+                  } catch (dbError) {
+                    console.warn('Warning: Could not save attachment data to database:', dbError.message);
+                    // Continue processing even if database save fails
+                  }
+                }
               }
 
               emailData.attachments.push(attachmentData);

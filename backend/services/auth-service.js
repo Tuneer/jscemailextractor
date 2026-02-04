@@ -1,11 +1,18 @@
 const jwt = require('jsonwebtoken');
 
+// Database service will be injected
+let dbService = null;
+
 class AuthService {
-  constructor() {
+  constructor(databaseService = null) {
     this.jwtSecret = process.env.JWT_SECRET;
     this.allowedDomains = process.env.ALLOWED_DOMAINS 
       ? process.env.ALLOWED_DOMAINS.split(',').map(d => d.trim())
       : [];
+    
+    if (databaseService) {
+      dbService = databaseService;
+    }
   }
 
   validateEmail(email) {
@@ -27,7 +34,16 @@ class AuthService {
     return { valid: true };
   }
 
-  generateToken(email) {
+  async generateToken(email, ipAddress = null, userAgent = null) {
+    // Save login history to database if database service is available
+    if (dbService) {
+      try {
+        await dbService.saveLoginHistory(email, ipAddress, userAgent);
+      } catch (error) {
+        console.error('Error saving login history:', error.message);
+      }
+    }
+    
     return jwt.sign(
       { email, loginTime: Date.now() },
       this.jwtSecret,

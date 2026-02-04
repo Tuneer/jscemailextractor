@@ -123,6 +123,7 @@ This project includes comprehensive documentation:
 - **[docs/WINDOWS_VPS_DEPLOYMENT.txt](docs/WINDOWS_VPS_DEPLOYMENT.txt)**: Windows deployment guide
 - **[docs/email extract feature.txt](docs/email%20extract%20feature.txt)**: Original requirements document
 
+
 ## 🔐 Security Features
 
 - JWT authentication with 24-hour tokens

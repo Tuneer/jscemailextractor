@@ -29,6 +29,12 @@
   color: #333;
 }
 
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .nav-user {
   display: flex;
   align-items: center;
@@ -245,6 +251,12 @@
   .nav-content {
     flex-direction: column;
     gap: 12px;
+  }
+  
+  .nav-controls {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
   }
   
   .nav-user {

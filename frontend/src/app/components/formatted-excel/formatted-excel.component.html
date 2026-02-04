@@ -1,0 +1,163 @@
+<div class="container">
+  <div class="header">
+    <h1>Formatted Excel Export</h1>
+    <p>Export database-stored Excel files with custom formatting</p>
+  </div>
+
+  <!-- Navigation -->
+  <div class="navigation">
+    <button class="btn btn-secondary" (click)="navigateToHome()">← Back to Home</button>
+  </div>
+
+  <!-- Status Messages -->
+  <div *ngIf="message" 
+       [class.success-message]="messageType === 'success'"
+       [class.error-message]="messageType === 'error'"
+       [class.info-message]="messageType === 'info'"
+       class="message">
+    {{ message }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading emails with attachments...</p>
+  </div>
+
+  <div class="content" *ngIf="!loading">
+    <!-- Email Selection -->
+    <div class="section">
+      <h2>Select Email with Attachment</h2>
+      <div class="email-list">
+        <div 
+          *ngFor="let email of emails" 
+          class="email-card"
+          [class.selected]="selectedEmail?.id === email.id"
+          (click)="onEmailSelect(email)">
+          <div class="email-info">
+            <h3>{{ email.subject }}</h3>
+            <p><strong>From:</strong> {{ email.from_address }}</p>
+            <p><strong>Date:</strong> {{ formatDate(email.date_received) }}</p>
+            <p><strong>Attachment:</strong> {{ email.filename }} ({{ email.size | number }} bytes)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Template Selection -->
+    <div class="section">
+      <div class="section-header">
+        <h2>Select Format Template</h2>
+        <button class="btn btn-primary" (click)="showTemplateFormHandler()">+ Add New Template</button>
+      </div>
+
+      <!-- Template Form -->
+      <div *ngIf="showTemplateForm" class="template-form">
+        <h3>Create New Template</h3>
+        <div class="form-group">
+          <label for="merchantName">Merchant Name:</label>
+          <input 
+            type="text" 
+            id="merchantName" 
+            [(ngModel)]="newMerchantName" 
+            placeholder="Enter merchant name">
+        </div>
+        
+        <div class="form-group">
+          <label for="templateName">Template Name:</label>
+          <input 
+            type="text" 
+            id="templateName" 
+            [(ngModel)]="newTemplateName" 
+            placeholder="Enter template name">
+        </div>
+
+        <div class="form-group">
+          <label for="headerRow1">Header Row 1 (comma-separated values):</label>
+          <input 
+            type="text" 
+            id="headerRow1" 
+            [(ngModel)]="headerRow1" 
+            placeholder="e.g., Company Name, Address, Phone, etc.">
+        </div>
+
+        <div class="form-group">
+          <label for="headerRow2">Header Row 2 (comma-separated values):</label>
+          <input 
+            type="text" 
+            id="headerRow2" 
+            [(ngModel)]="headerRow2" 
+            placeholder="e.g., Report Date, Prepared By, etc.">
+        </div>
+
+        <div class="form-group">
+          <label for="headerRow3">Header Row 3 (comma-separated values):</label>
+          <input 
+            type="text" 
+            id="headerRow3" 
+            [(ngModel)]="headerRow3" 
+            placeholder="Additional header info...">
+        </div>
+
+        <div class="form-group">
+          <label for="headerRow4">Header Row 4 (comma-separated values):</label>
+          <input 
+            type="text" 
+            id="headerRow4" 
+            [(ngModel)]="headerRow4" 
+            placeholder="Additional header info...">
+        </div>
+
+        <div class="form-group">
+          <label for="headerRow5">Header Row 5 (comma-separated values):</label>
+          <input 
+            type="text" 
+            id="headerRow5" 
+            [(ngModel)]="headerRow5" 
+            placeholder="Additional header info...">
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-success" (click)="saveTemplate()">Save Template</button>
+          <button class="btn btn-secondary" (click)="hideTemplateForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Available Templates -->
+      <div class="template-list">
+        <div 
+          *ngFor="let template of templates" 
+          class="template-card"
+          [class.selected]="selectedTemplate?.id === template.id"
+          (click)="onTemplateSelect(template)">
+          <h3>{{ template.template_name }}</h3>
+          <p><strong>Merchant:</strong> {{ template.merchant_name }}</p>
+          <p><small>Created: {{ formatDate(template.created_at) }}</small></p>
+        </div>
+        
+        <div 
+          class="template-card no-template"
+          [class.selected]="!selectedTemplate"
+          (click)="onTemplateSelect(null)">
+          <h3>No Template (Use Empty Headers)</h3>
+          <p>Will create Excel with first 5 rows empty</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="section">
+      <h2>Export Formatted Excel</h2>
+      <div class="export-controls">
+        <p>Select an email attachment and template, then click export.</p>
+        <button 
+          class="btn btn-primary btn-large" 
+          [disabled]="!selectedEmail || processing"
+          (click)="exportFormattedExcel()">
+          <span *ngIf="processing" class="spinner-small"></span>
+          {{ processing ? 'Exporting...' : 'Export Formatted Excel' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

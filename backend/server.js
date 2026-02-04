@@ -5,7 +5,9 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const authRoutes = require('./routes/auth-routes');
 const gmailRoutes = require('./routes/gmail-routes');
+const dataRoutes = require('./routes/data-routes');
 const emailService = require('./services/email-service');
+const dbService = require('./services/db-service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +39,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/gmail', gmailRoutes);
+app.use('/api/data', dataRoutes);
 
 // Serve Angular app for all non-API routes (SPA support)
 app.get('*', (req, res) => {
@@ -60,6 +63,21 @@ app.use((err, req, res, next) => {
     error: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
+
+// Initialize database service
+(async () => {
+  try {
+    await dbService.initialize();
+    console.log('Database service initialized successfully');
+    
+    // Initialize auth service with database service
+    const authService = require('./services/auth-service');
+    authService.constructor(dbService);
+  } catch (error) {
+    console.warn('Warning: Failed to initialize database service:', error.message);
+    console.warn('Application will continue running without database functionality');
+  }
+})();
 
 // Start OTP cleanup task
 emailService.startCleanupTask();
