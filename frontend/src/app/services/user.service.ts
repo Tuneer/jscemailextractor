@@ -52,7 +52,7 @@ export interface MerchantApplication {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'http://localhost:3001/api/user';
+  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/user';
   private tokenKey = 'auth_token';
 
   constructor(private http: HttpClient) {}

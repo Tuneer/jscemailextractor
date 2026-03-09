@@ -8,7 +8,7 @@ import { EmailSearchRequest, EmailSearchResponse, ProcessEmailResponse } from '.
   providedIn: 'root'
 })
 export class EmailService {
-  private apiUrl = 'http://localhost:3001/api/gmail';
+  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/gmail';
 
   constructor(
     private http: HttpClient,

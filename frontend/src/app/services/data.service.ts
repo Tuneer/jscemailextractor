@@ -32,7 +32,7 @@ export interface Template {
   providedIn: 'root'
 })
 export class DataService {
-  private apiUrl = 'http://localhost:3001/api/data';
+  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/data';
 
   constructor(
     private http: HttpClient,

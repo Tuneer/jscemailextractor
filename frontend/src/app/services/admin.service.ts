@@ -54,7 +54,7 @@ export interface Merchant {
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'http://localhost:3001/api/admin';
+  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/admin';
   private tokenKey = 'admin_token';
   private userKey = 'admin_user';
   

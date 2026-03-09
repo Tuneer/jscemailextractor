@@ -21,26 +21,19 @@ class EmailService {
   }
 
   setupTransporter() {
-    // Check if SMTP credentials are provided
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      // Use SMTP transport
-      this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
-      });
-    } else {
-      // Use sendmail transport (works with server's mail configuration)
-      this.transporter = nodemailer.createTransport({
-        sendmail: true,
-        newline: 'unix',
-        path: '/usr/sbin/sendmail'
-      });
-    }
+    // Use Gmail SMTP with app password
+   this.transporter= nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+     secure: false,
+      auth: {
+        user: process.env.EMAIL_USER || process.env.SMTP_USER,
+        pass: process.env.EMAIL_PASSWORD || process.env.SMTP_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
   }
 
   generateOTP() {
