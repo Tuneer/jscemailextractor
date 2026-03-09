@@ -6,8 +6,12 @@ const path = require('path');
 const authRoutes = require('./routes/auth-routes');
 const gmailRoutes = require('./routes/gmail-routes');
 const dataRoutes = require('./routes/data-routes');
+const adminRoutes = require('./routes/admin-routes');
+const userRoutes = require('./routes/user-routes');
+const automationRoutes = require('./routes/automation-routes');
 const emailService = require('./services/email-service');
 const dbService = require('./services/db-service');
+const authService = require('./services/auth-service');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +44,9 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/gmail', gmailRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/automation', automationRoutes);
 
 // Serve Angular app for all non-API routes (SPA support)
 app.get('*', (req, res) => {
@@ -70,8 +77,10 @@ app.use((err, req, res, next) => {
     await dbService.initialize();
     console.log('Database service initialized successfully');
     
+    // Inject database service into email service
+    emailService.setDatabaseService(dbService);
+    
     // Initialize auth service with database service
-    const authService = require('./services/auth-service');
     authService.constructor(dbService);
   } catch (error) {
     console.warn('Warning: Failed to initialize database service:', error.message);

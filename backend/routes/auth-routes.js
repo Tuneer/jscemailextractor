@@ -53,7 +53,7 @@ router.post('/verify-otp', async (req, res) => {
     }
 
     // Verify OTP
-    const result = emailService.verifyOTP(email, otp);
+    const result = await emailService.verifyOTP(email, otp);
 
     if (!result.success) {
       return res.status(400).json(result);

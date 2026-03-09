@@ -18,6 +18,7 @@
       <div class="nav-controls">
         <app-theme-toggle></app-theme-toggle>
         <div class="nav-user">
+          <a [routerLink]="['/dashboard']" class="nav-link">Dashboard</a>
           <a [routerLink]="['/developer-contact']" class="nav-link">Developer Contact</a>
           <span class="user-email">{{ userEmail }}</span>
           <button class="btn-logout" (click)="logout()">Logout</button>

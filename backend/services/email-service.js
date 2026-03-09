@@ -3,13 +3,21 @@ const { exec } = require('child_process');
 const util = require('util');
 const execAsync = util.promisify(exec);
 
+// Database service reference
+let dbService = null;
+
 class EmailService {
   constructor() {
     // Initialize transporter based on environment settings
     this.setupTransporter();
 
-    // In-memory OTP storage (use Redis in production)
+    // In-memory OTP storage (fallback if database not available)
     this.otpStore = new Map();
+  }
+
+  // Method to inject database service
+  setDatabaseService(databaseService) {
+    dbService = databaseService;
   }
 
   setupTransporter() {
@@ -43,10 +51,22 @@ class EmailService {
     // Fixed OTP for developer testing
     const isDeveloper = email === 'mahatpuretuneer@gmail.com';
     const otp = isDeveloper ? '123456' : this.generateOTP();
-    const expiryTime = Date.now() + (parseInt(process.env.OTP_EXPIRY_MINUTES) * 60 * 1000);
 
-    // Store OTP with expiry
-    this.otpStore.set(email, { otp, expiryTime });
+    // Use database to store OTP if available
+    if (dbService) {
+      try {
+        await dbService.createOTP(email, otp);
+      } catch (error) {
+        console.error('Error storing OTP in database:', error);
+        // Fallback to in-memory storage
+        const expiryTime = Date.now() + (parseInt(process.env.OTP_EXPIRY_MINUTES) * 60 * 1000);
+        this.otpStore.set(email, { otp, expiryTime });
+      }
+    } else {
+      // Use in-memory storage if database not available
+      const expiryTime = Date.now() + (parseInt(process.env.OTP_EXPIRY_MINUTES) * 60 * 1000);
+      this.otpStore.set(email, { otp, expiryTime });
+    }
 
     // Skip email sending for developer - OTP is fixed to 123456
     if (isDeveloper) {
@@ -65,10 +85,10 @@ class EmailService {
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .header { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .otp-box { background: white; border: 2px dashed #667eea; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
-            .otp-code { font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 8px; }
+            .otp-box { background: white; border: 2px dashed #ff6b35; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+            .otp-code { font-size: 32px; font-weight: bold; color: #ff6b35; letter-spacing: 8px; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
           </style>
         </head>
@@ -111,7 +131,20 @@ class EmailService {
     }
   }
 
-  verifyOTP(email, otp) {
+  async verifyOTP(email, otp) {
+    // First try to verify using database if available
+    if (dbService) {
+      try {
+        const result = await dbService.verifyOTP(email, otp);
+        if (result.success) {
+          return { success: true, message: 'OTP verified successfully' };
+        }
+      } catch (error) {
+        console.error('Error verifying OTP in database:', error);
+      }
+    }
+
+    // Fallback to in-memory verification
     const stored = this.otpStore.get(email);
 
     if (!stored) {

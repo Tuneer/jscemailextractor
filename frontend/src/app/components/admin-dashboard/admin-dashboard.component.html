@@ -1,0 +1,150 @@
+<div class="admin-dashboard-container">
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">🛡️ Admin Dashboard</h1>
+      <p class="dashboard-subtitle">Business Management Portal</p>
+    </div>
+    <div class="header-actions">
+      <span class="user-info">Welcome, {{ user?.fullName || user?.username }}</span>
+      <button class="btn btn-secondary" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error">
+    {{ error }}
+    <button class="retry-btn" (click)="refreshData()">Retry</button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="!loading && !error">
+    <div class="stat-card">
+      <div class="stat-icon">🏢</div>
+      <div class="stat-info">
+        <h3>{{ stats.totalVerticals }}</h3>
+        <p>Total Business Verticals</p>
+        <span class="stat-detail">{{ stats.activeVerticals }} active</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🏪</div>
+      <div class="stat-info">
+        <h3>{{ stats.totalMerchants }}</h3>
+        <p>Total Merchants</p>
+        <span class="stat-detail">{{ stats.activeMerchants }} active</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-info">
+        <h3>{{ businessVerticals.length }}</h3>
+        <p>Business Categories</p>
+        <span class="stat-detail">Manage verticals</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-info">
+        <h3>{{ merchants.length }}</h3>
+        <p>Merchant Records</p>
+        <span class="stat-detail">View & manage</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions-section" *ngIf="!loading && !error">
+    <h2 class="section-title">Management Tools</h2>
+    <div class="actions-grid">
+      <div class="action-card" (click)="goToBusinessVerticals()">
+        <div class="action-icon">🏢</div>
+        <h3>Business Verticals</h3>
+        <p>Manage business categories and industries</p>
+        <div class="action-stats">
+          <span class="stat-badge">{{ stats.totalVerticals }} total</span>
+          <span class="stat-badge active">{{ stats.activeVerticals }} active</span>
+        </div>
+      </div>
+      
+      <div class="action-card" (click)="goToMerchants()">
+        <div class="action-icon">🏪</div>
+        <h3>Merchants</h3>
+        <p>Manage merchant records and bulk upload</p>
+        <div class="action-stats">
+          <span class="stat-badge">{{ stats.totalMerchants }} total</span>
+          <span class="stat-badge active">{{ stats.activeMerchants }} active</span>
+        </div>
+      </div>
+      
+      <div class="action-card">
+        <div class="action-icon">📈</div>
+        <h3>Reports</h3>
+        <p>View analytics and business reports</p>
+        <div class="action-stats">
+          <span class="stat-badge">Coming soon</span>
+        </div>
+      </div>
+      
+      <div class="action-card">
+        <div class="action-icon">⚙️</div>
+        <h3>Settings</h3>
+        <p>System configuration and preferences</p>
+        <div class="action-stats">
+          <span class="stat-badge">Coming soon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Data Preview -->
+  <div class="recent-data-section" *ngIf="!loading && !error">
+    <div class="data-preview">
+      <h2 class="section-title">Recent Business Verticals</h2>
+      <div class="preview-list">
+        <div class="preview-item" *ngFor="let vertical of businessVerticals.slice(0, 5)">
+          <div class="preview-content">
+            <h3 class="preview-name">{{ vertical.name }}</h3>
+            <p class="preview-desc">{{ vertical.description }}</p>
+            <span class="preview-status" [class.active]="vertical.is_active">
+              {{ vertical.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="empty-state" *ngIf="businessVerticals.length === 0">
+          <p>No business verticals found. Add your first category.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="data-preview">
+      <h2 class="section-title">Recent Merchants</h2>
+      <div class="preview-list">
+        <div class="preview-item" *ngFor="let merchant of merchants.slice(0, 5)">
+          <div class="preview-content">
+            <h3 class="preview-name">{{ merchant.business_name }}</h3>
+            <p class="preview-desc">Vertical: {{ merchant.business_vertical_name || 'Not assigned' }}</p>
+            <p class="preview-contact">Contact: {{ merchant.contact_person }} | {{ merchant.email }}</p>
+            <span class="preview-status" [class.active]="merchant.is_active">
+              {{ merchant.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="empty-state" *ngIf="merchants.length === 0">
+          <p>No merchants found. Add merchants through bulk upload or manual entry.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

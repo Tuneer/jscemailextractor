@@ -1,0 +1,48 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">Business Dashboard</h1>
+      <p class="dashboard-subtitle">Select a business category to view merchants</p>
+    </div>
+    <div class="header-actions">
+      <span class="user-info">Welcome, {{ user?.email }}</span>
+      <button class="btn btn-secondary" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error">
+    {{ error }}
+    <button class="retry-btn" (click)="refreshData()">Retry</button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading business categories...</p>
+  </div>
+
+  <!-- Business Verticals Grid -->
+  <div class="verticals-section" *ngIf="!loading && !error">
+    <h2 class="section-title">Business Categories</h2>
+    <div class="verticals-grid">
+      <div class="vertical-card" 
+           *ngFor="let vertical of businessVerticals" 
+           (click)="selectVertical(vertical)">
+        <div class="vertical-icon">
+          <span class="icon">{{ getVerticalIcon(vertical.name) }}</span>
+        </div>
+        <div class="vertical-content">
+          <h3 class="vertical-name">{{ vertical.name }}</h3>
+          <p class="vertical-description">{{ vertical.description }}</p>
+        </div>
+        <div class="vertical-arrow">→</div>
+      </div>
+    </div>
+    
+    <div class="empty-state" *ngIf="businessVerticals.length === 0">
+      <p>No business categories available. Please contact administrator.</p>
+    </div>
+  </div>
+</div>

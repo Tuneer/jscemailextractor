@@ -1,0 +1,53 @@
+<div class="landing-container">
+  <div class="hero-section">
+    <h1 class="hero-title">Email Extractor Applications</h1>
+    <p class="hero-subtitle">Sign up or login to access the email extraction tools</p>
+    <div class="auth-options">
+      <a [routerLink]="['/register']" class="btn btn-register">Register</a>
+      <a [routerLink]="['/login']" class="btn btn-login">Login</a>
+    </div>
+  </div>
+
+  <div class="applications-grid">
+    <div 
+      class="application-card" 
+      *ngFor="let app of applications; trackBy: trackByAppId"
+      [style.border-left-color]="app.color"
+      (click)="selectApplication(app.id)">
+      <div class="card-content">
+        <div class="app-icon" [style.color]="app.color">{{ app.icon }}</div>
+        <h2 class="app-title">{{ app.name }}</h2>
+        <p class="app-description">{{ app.description }}</p>
+        <button class="select-btn" [style.background]="app.color">
+          Select Application
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="features-section">
+    <h2 class="section-title">Key Features</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">🔐</div>
+        <h3>Secure Authentication</h3>
+        <p>OTP-based secure login system</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📧</div>
+        <h3>Email Processing</h3>
+        <p>Advanced email extraction capabilities</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <h3>Data Analytics</h3>
+        <p>Comprehensive data analysis tools</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">💾</div>
+        <h3>Secure Storage</h3>
+        <p>Encrypted data storage and management</p>
+      </div>
+    </div>
+  </div>
+</div>
