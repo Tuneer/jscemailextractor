@@ -18,10 +18,20 @@
     <button 
       *ngIf="hasData()" 
       class="btn btn-primary"
+      [disabled]="isExporting"
       (click)="exportAllAttachments()"
     >
-      Export All Data
+      <span *ngIf="!isExporting">Export All Data</span>
+      <span *ngIf="isExporting">Exporting... ({{ exportProgress.current }}/{{ exportProgress.total }})</span>
     </button>
+  </div>
+
+  <!-- Progress indicator for exports -->
+  <div *ngIf="isExporting" class="export-progress">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="(exportProgress.total > 0 ? (exportProgress.current / exportProgress.total * 100) : 0)"></div>
+    </div>
+    <p class="progress-text">Exporting file {{ exportProgress.current }} of {{ exportProgress.total }}...</p>
   </div>
 
   <div *ngIf="!results" class="empty-state">
@@ -61,14 +71,12 @@
           </div>
           <div class="attachment-actions">
             <button 
-              *ngIf="attachment.data && attachment.data.length > 0"
               class="btn-action"
               (click)="viewAttachment(attachment)"
             >
               View Data
             </button>
             <button 
-              *ngIf="attachment.data && attachment.data.length > 0"
               class="btn-action btn-export"
               (click)="exportAttachment(attachment)"
             >
@@ -104,7 +112,14 @@
       </div>
 
       <div class="modal-body">
-        <div *ngIf="selectedAttachment.data && selectedAttachment.data.length > 0" class="data-table-container">
+        <!-- Loading indicator -->
+        <div *ngIf="isLoadingAttachment" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Loading Excel data...</p>
+        </div>
+
+        <!-- Data table -->
+        <div *ngIf="!isLoadingAttachment && selectedAttachment.data && selectedAttachment.data.length > 0" class="data-table-container">
           <table class="data-table">
             <thead>
               <tr>
@@ -122,8 +137,11 @@
             </tbody>
           </table>
         </div>
-        <div *ngIf="!selectedAttachment.data || selectedAttachment.data.length === 0" class="no-data">
+
+        <!-- No data message -->
+        <div *ngIf="!isLoadingAttachment && (!selectedAttachment.data || selectedAttachment.data.length === 0)" class="no-data">
           <p>No data available for this attachment</p>
+          <p class="hint">This file may not be an Excel/CSV file or data extraction failed</p>
         </div>
       </div>
     </div>

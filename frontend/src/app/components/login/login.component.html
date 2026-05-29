@@ -2,16 +2,17 @@
   <div class="login-card">
     <div class="login-header">
       <div class="logo">
-        <h2>📧 {{ getLoginTitle() }}</h2>
+        <h2>Email Extractor</h2>
       </div>
-      <h1>{{ getLoginTitle() }}</h1>
-      <p class="subtitle">{{ getLoginSubtitle() }}</p>
+      <h1>Welcome Back</h1>
+      <p class="subtitle">Sign in to continue</p>
     </div>
     
     <div class="login-body">
+      <!-- Step 1: Email -->
       <div class="form-step" *ngIf="step === 'email'">
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="email">Email or Username</label>
           <input
             type="email"
             id="email"
@@ -19,57 +20,118 @@
             [(ngModel)]="email"
             placeholder="Enter your email address"
             [disabled]="loading"
-            (keyup.enter)="requestOTP()"
+            (keyup.enter)="continueWithEmail()"
           >
         </div>
         
         <button
           class="btn btn-primary"
           [disabled]="loading || !email"
-          (click)="requestOTP()"
+          (click)="continueWithEmail()"
         >
           <span class="loading-spinner" *ngIf="loading"></span>
-          {{ loading ? 'Processing...' : (isAdminLogin ? 'Continue' : 'Send OTP') }}
+          {{ loading ? 'Checking...' : 'Continue' }}
         </button>
       </div>
       
-      <div class="form-step" *ngIf="step === 'otp'">
-        <div class="otp-info" *ngIf="!isAdminLogin">
-          <p>Enter the 6-digit OTP sent to your email</p>
+      <!-- Step 2: Authentication -->
+      <div class="form-step" *ngIf="step === 'auth'">
+        <!-- Login Mode Toggle -->
+        <div class="login-mode-toggle">
+          <button 
+            class="toggle-btn" 
+            [class.active]="loginMode === 'otp'"
+            (click)="toggleLoginMode()"
+            type="button">
+            Login with OTP
+          </button>
+          <button 
+            class="toggle-btn" 
+            [class.active]="loginMode === 'password'"
+            (click)="toggleLoginMode()"
+            type="button">
+            Login with Password
+          </button>
         </div>
         
-        <div class="form-group">
-          <label for="otp">{{ isAdminLogin ? 'Admin Password' : 'OTP Code' }}</label>
-          <input
-            type="text"
-            id="otp"
-            class="input-field otp-input"
-            [(ngModel)]="otp"
-            placeholder="{{ isAdminLogin ? 'Enter admin password' : 'Enter 6-digit OTP' }}"
+        <!-- New User Info -->
+        <div class="info-box" *ngIf="isNewUser && loginMode === 'otp'">
+          <p><strong>New User?</strong> Register by entering the OTP sent to your email.</p>
+        </div>
+        
+        <!-- OTP Form -->
+        <div *ngIf="loginMode === 'otp'">
+          <!-- Send OTP Button First -->
+          <button
+            class="btn btn-secondary btn-block"
             [disabled]="loading"
-            maxlength="{{ isAdminLogin ? '20' : '6' }}"
-            (keyup.enter)="verifyOTP()"
+            (click)="requestOTP()"
+            type="button"
           >
+            Send OTP
+          </button>
+          
+          <!-- OTP Input After Sending -->
+          <div class="form-group">
+            <label for="otp">OTP Code</label>
+            <input
+              type="text"
+              id="otp"
+              class="input-field otp-input"
+              [(ngModel)]="otp"
+              placeholder="Enter 6-digit OTP"
+              [disabled]="loading"
+              maxlength="6"
+              (keyup.enter)="verifyOTP()"
+            >
+          </div>
+          
+          <button
+            class="btn btn-primary"
+            [disabled]="loading || otp.length < 6"
+            (click)="verifyOTP()"
+          >
+            <span class="loading-spinner" *ngIf="loading"></span>
+            {{ loading ? 'Verifying...' : 'Login' }}
+          </button>
+        </div>
+        
+        <!-- Password Form -->
+        <div *ngIf="loginMode === 'password'">
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              class="input-field"
+              [(ngModel)]="password"
+              placeholder="Enter your password"
+              [disabled]="loading"
+              (keyup.enter)="loginWithPassword()"
+            >
+          </div>
+          
+          <button
+            class="btn btn-primary"
+            [disabled]="loading || password.length < 6"
+            (click)="loginWithPassword()"
+          >
+            <span class="loading-spinner" *ngIf="loading"></span>
+            {{ loading ? 'Logging in...' : 'Login' }}
+          </button>
         </div>
         
         <button
-          class="btn btn-primary"
-          [disabled]="loading || !otp"
-          (click)="verifyOTP()"
-        >
-          <span class="loading-spinner" *ngIf="loading"></span>
-          {{ loading ? 'Verifying...' : 'Login' }}
-        </button>
-        
-        <button
-          class="btn btn-secondary"
+          class="btn btn-link"
           [disabled]="loading"
           (click)="backToEmail()"
+          type="button"
         >
-          Back
+          ← Change Email/Username
         </button>
       </div>
       
+      <!-- Message -->
       <div class="message" [class]="'message-' + messageType" *ngIf="message">
         <span class="message-icon">
           <span *ngIf="messageType === 'success'">✅</span>
@@ -81,11 +143,9 @@
     </div>
     
     <div class="login-footer">
-      <p *ngIf="!isAdminLogin">
-        Admin access? <button class="link-button" (click)="switchToAdmin()">Switch to Admin Login</button>
-      </p>
-      <p *ngIf="isAdminLogin">
-        Regular user? <button class="link-button" (click)="switchToUser()">Switch to User Login</button>
+      <p>
+        Don't have an account? 
+        <a routerLink="/register" class="link-button">Register here</a>
       </p>
       <p class="company-name">JSC Global Solutions PVT. LTD.</p>
     </div>

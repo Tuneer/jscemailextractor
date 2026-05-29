@@ -22,8 +22,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files from Angular build (for production)
+// Commented out since frontend is deployed separately on cPanel
 const frontendPath = path.join(__dirname, '../frontend/dist/frontend/browser');
-app.use(express.static(frontendPath));
+// app.use(express.static(frontendPath));
 
 // Request logging
 app.use((req, res, next) => {
@@ -49,17 +50,18 @@ app.use('/api/user', userRoutes);
 app.use('/api/automation', automationRoutes);
 
 // Serve Angular app for all non-API routes (SPA support)
-app.get('*', (req, res) => {
-  // Only serve index.html for non-API routes
-  if (!req.url.startsWith('/api')) {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  } else {
-    res.status(404).json({
-      success: false,
-      message: 'API endpoint not found'
-    });
-  }
-});
+// Commented out since frontend is deployed separately
+// app.get('*', (req, res) => {
+//   // Only serve index.html for non-API routes
+//   if (!req.url.startsWith('/api')) {
+//     res.sendFile(path.join(frontendPath, 'index.html'));
+//   } else {
+//     res.status(404).json({
+//       success: false,
+//       message: 'API endpoint not found'
+//     });
+//   }
+// });
 
 // Error handler
 app.use((err, req, res, next) => {

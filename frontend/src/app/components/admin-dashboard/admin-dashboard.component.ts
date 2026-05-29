@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AdminService, BusinessVertical, Merchant } from '../../services/admin.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })
@@ -99,5 +99,12 @@ export class AdminDashboardComponent implements OnInit {
 
   refreshData(): void {
     this.loadDashboardData();
+  }
+
+  scrollToManagement(): void {
+    const element = document.querySelector('.quick-actions-section');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 }

@@ -52,7 +52,7 @@ export class EmailReaderComponent {
 
     const request: EmailSearchRequest = {
       query: this.searchQuery,
-      senderEmail: this.senderEmail,
+      senderEmail: this.senderEmail && this.senderEmail.trim() !== '' ? this.senderEmail.trim() : undefined,
       maxResults: this.maxResults
     };
 
@@ -64,7 +64,8 @@ export class EmailReaderComponent {
           if (this.emails.length === 0) {
             this.showMessage('No emails found. Try adjusting your search criteria.', 'info');
           } else {
-            this.showMessage(`Found ${this.emails.length} email(s) with attachments`, 'success');
+            const senderMsg = request.senderEmail ? ` from ${request.senderEmail}` : '';
+            this.showMessage(`Found ${this.emails.length} email(s)${senderMsg} with attachments`, 'success');
           }
         } else {
           this.showMessage(response.message || 'Failed to search emails', 'error');

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface AdminLoginResponse {
   success: boolean;
@@ -54,7 +55,7 @@ export interface Merchant {
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/admin';
+  private apiUrl = environment.apiUrl;
   private tokenKey = 'admin_token';
   private userKey = 'admin_user';
   
@@ -68,7 +69,7 @@ export class AdminService {
   }
 
   login(username: string, password: string): Observable<AdminLoginResponse> {
-    return this.http.post<AdminLoginResponse>(`${this.apiUrl}/login`, { username, password })
+    return this.http.post<AdminLoginResponse>(`${this.apiUrl}/admin/login`, { username, password })
       .pipe(
         tap(response => {
           if (response.success && response.token && response.user) {
@@ -117,36 +118,36 @@ export class AdminService {
 
   // Business Verticals APIs
   getBusinessVerticals(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/business-verticals`, { headers: this.getAuthHeaders() });
+    return this.http.get(`${this.apiUrl}/admin/business-verticals`, { headers: this.getAuthHeaders() });
   }
 
   createBusinessVertical(vertical: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/business-verticals`, vertical, { headers: this.getAuthHeaders() });
+    return this.http.post(`${this.apiUrl}/admin/business-verticals`, vertical, { headers: this.getAuthHeaders() });
   }
 
   updateBusinessVertical(id: number, vertical: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/business-verticals/${id}`, vertical, { headers: this.getAuthHeaders() });
+    return this.http.put(`${this.apiUrl}/admin/business-verticals/${id}`, vertical, { headers: this.getAuthHeaders() });
   }
 
   deleteBusinessVertical(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/business-verticals/${id}`, { headers: this.getAuthHeaders() });
+    return this.http.delete(`${this.apiUrl}/admin/business-verticals/${id}`, { headers: this.getAuthHeaders() });
   }
 
   // Merchants APIs
   getMerchants(limit: number = 100, offset: number = 0): Observable<any> {
-    return this.http.get(`${this.apiUrl}/merchants?limit=${limit}&offset=${offset}`, { headers: this.getAuthHeaders() });
+    return this.http.get(`${this.apiUrl}/admin/merchants?limit=${limit}&offset=${offset}`, { headers: this.getAuthHeaders() });
   }
 
   createMerchant(merchant: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/merchants`, merchant, { headers: this.getAuthHeaders() });
+    return this.http.post(`${this.apiUrl}/admin/merchants`, merchant, { headers: this.getAuthHeaders() });
   }
 
   updateMerchant(id: number, merchant: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/merchants/${id}`, merchant, { headers: this.getAuthHeaders() });
+    return this.http.put(`${this.apiUrl}/admin/merchants/${id}`, merchant, { headers: this.getAuthHeaders() });
   }
 
   deleteMerchant(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/merchants/${id}`, { headers: this.getAuthHeaders() });
+    return this.http.delete(`${this.apiUrl}/admin/merchants/${id}`, { headers: this.getAuthHeaders() });
   }
 
   // Bulk upload
@@ -158,7 +159,7 @@ export class AdminService {
       'Authorization': `Bearer ${this.getToken()}`
     });
 
-    return this.http.post(`${this.apiUrl}/merchants/bulk-upload`, formData, { headers });
+    return this.http.post(`${this.apiUrl}/admin/merchants/bulk-upload`, formData, { headers });
   }
 
   // Get sample template
@@ -167,7 +168,7 @@ export class AdminService {
       'Authorization': `Bearer ${this.getToken()}`
     });
 
-    return this.http.get(`${this.apiUrl}/merchants/sample-template`, { 
+    return this.http.get(`${this.apiUrl}/admin/merchants/sample-template`, { 
       headers, 
       responseType: 'blob' 
     });

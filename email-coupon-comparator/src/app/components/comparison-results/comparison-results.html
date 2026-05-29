@@ -1,0 +1,312 @@
+<div class="comparison-results-container" *ngIf="result">
+  <div class="header">
+    <div class="header-title">
+      <h2><i class="bi bi-clipboard-data"></i> Comparison Results</h2>
+      <p class="subtitle">{{ result.merchantName }}</p>
+    </div>
+    <button class="btn btn-success" (click)="exportResults()">
+      <i class="bi bi-download"></i> Export to Excel
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="summary-card primary">
+      <div class="card-icon">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="card-content">
+        <span class="card-value">${{ getTotalPotentialSavings() | number:'1.2-2' }}</span>
+        <span class="card-label">Total Potential Savings</span>
+      </div>
+    </div>
+
+    <div class="summary-card success">
+      <div class="card-icon">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div class="card-content">
+        <span class="card-value">{{ result.matchedCoupons.length }}</span>
+        <span class="card-label">Matched Coupons</span>
+      </div>
+    </div>
+
+    <div class="summary-card info">
+      <div class="card-icon">
+        <i class="bi bi-percent"></i>
+      </div>
+      <div class="card-content">
+        <span class="card-value">{{ getMatchRate() }}%</span>
+        <span class="card-label">Match Rate</span>
+      </div>
+    </div>
+
+    <div class="summary-card warning">
+      <div class="card-icon">
+        <i class="bi bi-box"></i>
+      </div>
+      <div class="card-content">
+        <span class="card-value">{{ result.totalItems }}</span>
+        <span class="card-label">Total Items</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="results-tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'summary'"
+      (click)="setActiveTab('summary')"
+    >
+      <i class="bi bi-grid"></i> Summary
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'matched'"
+      (click)="setActiveTab('matched')"
+    >
+      <i class="bi bi-check-circle"></i> Matched Coupons
+      <span class="badge">{{ result.matchedCoupons.length }}</span>
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'unmatched'"
+      (click)="setActiveTab('unmatched')"
+    >
+      <i class="bi bi-x-circle"></i> Unmatched
+      <span class="badge">{{ result.unmatchedItems.length + result.unmatchedCoupons.length }}</span>
+    </button>
+  </div>
+
+  <!-- Summary Tab -->
+  <div *ngIf="activeTab === 'summary'" class="tab-content">
+    <div class="summary-sections">
+      <div class="section">
+        <h4>Best Coupon</h4>
+        <div *ngIf="result.summary.bestCoupon" class="best-coupon-card">
+          <div class="coupon-header">
+            <span class="coupon-code">{{ result.summary.bestCoupon.couponCode }}</span>
+            <span class="coupon-discount">{{ getDiscountDisplay(result.summary.bestCoupon) }}</span>
+          </div>
+          <p class="coupon-name">{{ result.summary.bestCoupon.couponName }}</p>
+          <p class="coupon-description">{{ result.summary.bestCoupon.description }}</p>
+        </div>
+        <div *ngIf="!result.summary.bestCoupon" class="no-data">
+          <i class="bi bi-inbox"></i>
+          <p>No best coupon found</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4>Statistics</h4>
+        <div class="stats-list">
+          <div class="stat-row">
+            <span class="stat-name">Total Coupons Analyzed</span>
+            <span class="stat-value">{{ result.totalCoupons }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Successfully Matched</span>
+            <span class="stat-value text-success">{{ result.matchedCoupons.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Unmatched Items</span>
+            <span class="stat-value text-warning">{{ result.unmatchedItems.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Unmatched Coupons</span>
+            <span class="stat-value text-muted">{{ result.unmatchedCoupons.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Average Discount</span>
+            <span class="stat-value">{{ getAverageDiscount() | number:'1.1-1' }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section full-width">
+        <h4>Top Savings Opportunities</h4>
+        <div class="savings-chart" *ngIf="result.matchedCoupons.length > 0">
+          <div 
+            *ngFor="let match of result.matchedCoupons | slice:0:5" 
+            class="savings-bar"
+          >
+            <div class="bar-label">
+              <span class="item-name">{{ match.item.itemName | slice:0:20 }}</span>
+              <span class="savings-value">${{ match.estimatedSavings | number:'1.2-2' }}</span>
+            </div>
+            <div class="bar-track">
+              <div 
+                class="bar-fill" 
+                [style.width.%]="(match.estimatedSavings / getTotalPotentialSavings()) * 100"
+                [style.background-color]="getSavingsColor(match.estimatedSavings)"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="result.matchedCoupons.length === 0" class="no-data">
+          <i class="bi bi-graph-down"></i>
+          <p>No savings data available</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Matched Coupons Tab -->
+  <div *ngIf="activeTab === 'matched'" class="tab-content">
+    <div class="matched-filters">
+      <span class="results-count">{{ result.matchedCoupons.length }} coupon-item matches found</span>
+    </div>
+
+    <div class="matched-list">
+      <div 
+        *ngFor="let match of result.matchedCoupons" 
+        class="match-card"
+        (click)="viewMatchDetails(match)"
+      >
+        <div class="match-score" [class]="getMatchScoreClass(match.matchScore)">
+          <span class="score-value">{{ match.matchScore }}</span>
+          <span class="score-label">Score</span>
+        </div>
+        
+        <div class="match-content">
+          <div class="match-header">
+            <span class="coupon-code">{{ match.coupon.couponCode }}</span>
+            <span class="discount-badge">{{ getDiscountDisplay(match.coupon) }}</span>
+          </div>
+          
+          <div class="match-details">
+            <div class="item-info">
+              <i class="bi bi-box"></i>
+              <span>{{ match.item.itemName }}</span>
+              <small>({{ match.item.itemCode }})</small>
+            </div>
+            <div class="savings-info">
+              <i class="bi bi-piggy-bank"></i>
+              <span class="savings-amount">${{ match.estimatedSavings | number:'1.2-2' }}</span>
+              <small>potential savings</small>
+            </div>
+          </div>
+          
+          <div class="match-reason">
+            <i class="bi bi-info-circle"></i>
+            {{ match.matchReason }}
+          </div>
+        </div>
+        
+        <div class="match-action">
+          <i class="bi bi-chevron-right"></i>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="result.matchedCoupons.length === 0" class="no-data">
+      <i class="bi bi-search"></i>
+      <p>No coupon matches found for your items</p>
+    </div>
+  </div>
+
+  <!-- Unmatched Tab -->
+  <div *ngIf="activeTab === 'unmatched'" class="tab-content">
+    <div class="unmatched-sections">
+      <div class="unmatched-section" *ngIf="result.unmatchedItems.length > 0">
+        <h4>
+          <i class="bi bi-box"></i>
+          Unmatched Items
+          <span class="count">({{ result.unmatchedItems.length }})</span>
+        </h4>
+        <div class="unmatched-list">
+          <div *ngFor="let itemCode of result.unmatchedItems | slice:0:20" class="unmatched-item">
+            <i class="bi bi-box"></i>
+            <span>{{ itemCode }}</span>
+          </div>
+          <div *ngIf="result.unmatchedItems.length > 20" class="more-items">
+            And {{ result.unmatchedItems.length - 20 }} more...
+          </div>
+        </div>
+      </div>
+
+      <div class="unmatched-section" *ngIf="result.unmatchedCoupons.length > 0">
+        <h4>
+          <i class="bi bi-ticket-perforated"></i>
+          Unmatched Coupons
+          <span class="count">({{ result.unmatchedCoupons.length }})</span>
+        </h4>
+        <div class="unmatched-list">
+          <div *ngFor="let coupon of result.unmatchedCoupons | slice:0:10" class="unmatched-coupon">
+            <div class="coupon-info">
+              <span class="code">{{ coupon.couponCode }}</span>
+              <span class="discount">{{ getDiscountDisplay(coupon) }}</span>
+            </div>
+            <p class="coupon-desc" *ngIf="coupon.description">{{ coupon.description | slice:0:50 }}</p>
+          </div>
+          <div *ngIf="result.unmatchedCoupons.length > 10" class="more-items">
+            And {{ result.unmatchedCoupons.length - 10 }} more...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="result.unmatchedItems.length === 0 && result.unmatchedCoupons.length === 0" class="no-data">
+      <i class="bi bi-check-all"></i>
+      <p>Everything is matched! No unmatched items or coupons.</p>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!result" class="no-results">
+  <i class="bi bi-clipboard-x"></i>
+  <h3>No Comparison Results</h3>
+  <p>Run a comparison to see results here</p>
+</div>
+
+<!-- Match Details Modal -->
+<div class="modal-overlay" *ngIf="showMatchDetails && selectedMatch" (click)="closeMatchDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5>Match Details</h5>
+      <button class="btn-close" (click)="closeMatchDetails()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-section">
+        <h6>Coupon</h6>
+        <div class="detail-card">
+          <span class="detail-code">{{ selectedMatch.coupon.couponCode }}</span>
+          <span class="detail-discount">{{ getDiscountDisplay(selectedMatch.coupon) }}</span>
+          <p>{{ selectedMatch.coupon.couponName }}</p>
+          <p class="text-muted">{{ selectedMatch.coupon.description }}</p>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h6>Item</h6>
+        <div class="detail-card">
+          <p><strong>{{ selectedMatch.item.itemName }}</strong></p>
+          <p class="text-muted">Code: {{ selectedMatch.item.itemCode }}</p>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h6>Match Information</h6>
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <span class="stat-label">Match Score</span>
+            <span class="stat-value" [class]="getMatchScoreClass(selectedMatch.matchScore)">
+              {{ selectedMatch.matchScore }}/100
+            </span>
+          </div>
+          <div class="detail-stat">
+            <span class="stat-label">Estimated Savings</span>
+            <span class="stat-value savings">${{ selectedMatch.estimatedSavings | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="match-reason-detail">
+          <i class="bi bi-info-circle"></i>
+          {{ selectedMatch.matchReason }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

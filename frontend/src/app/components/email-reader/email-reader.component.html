@@ -20,12 +20,12 @@
   <div class="search-panel">
     <div class="form-row">
       <div class="form-group">
-        <label for="senderEmail">Sender Email (Optional)</label>
+        <label for="senderEmail">Sender Email <span class="optional">(optional)</span></label>
         <input 
           type="email" 
           id="senderEmail"
           [(ngModel)]="senderEmail"
-          placeholder="sender@example.com"
+          placeholder="Leave empty for all emails, or enter sender@example.com"
           [disabled]="loading || processing"
           class="input-field"
         />

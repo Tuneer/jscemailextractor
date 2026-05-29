@@ -100,6 +100,17 @@
   font-size: 14px;
 }
 
+.form-group label .optional {
+  font-weight: 400;
+  color: #999;
+  font-size: 12px;
+}
+
+.form-group label .required {
+  color: #e74c3c;
+  margin-left: 4px;
+}
+
 .input-field {
   width: 100%;
   padding: 12px 16px;
@@ -391,4 +402,9 @@
   .email-table {
     min-width: 600px;
   }
+}
+
+.required {
+  color: #ef4444;
+  font-weight: bold;
 }

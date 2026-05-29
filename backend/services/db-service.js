@@ -20,6 +20,13 @@ class DatabaseService {
     await this.createTables();
   }
 
+  async getConnection() {
+    if (!this.pool) {
+      await this.initialize();
+    }
+    return this.pool;
+  }
+
   async createTables() {
     const connection = await this.pool.getConnection();
 
@@ -78,7 +85,6 @@ class DatabaseService {
           email VARCHAR(255) UNIQUE NOT NULL,
           username VARCHAR(255),
           password_hash VARCHAR(255), -- For future password-based auth
-          application_type ENUM('tuneer', 'gajendra', 'madhu') NOT NULL,
           is_active BOOLEAN DEFAULT TRUE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -91,7 +97,6 @@ class DatabaseService {
           id INT AUTO_INCREMENT PRIMARY KEY,
           email VARCHAR(255) NOT NULL,
           otp_code VARCHAR(6) NOT NULL,
-          application_type ENUM('tuneer', 'gajendra', 'madhu') NOT NULL,
           expires_at TIMESTAMP NOT NULL,
           used BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -105,7 +110,6 @@ class DatabaseService {
           id INT AUTO_INCREMENT PRIMARY KEY,
           user_id INT,
           email VARCHAR(255) NOT NULL,
-          application_type ENUM('tuneer', 'gajendra', 'madhu') NOT NULL,
           ip_address VARCHAR(45),
           user_agent TEXT,
           login_status ENUM('success', 'failed') NOT NULL,
@@ -118,12 +122,10 @@ class DatabaseService {
 
       // Create indexes for better performance
       await connection.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
-      await connection.query(`CREATE INDEX IF NOT EXISTS idx_users_app_type ON users(application_type)`);
       await connection.query(`CREATE INDEX IF NOT EXISTS idx_otp_email ON otp_codes(email)`);
       await connection.query(`CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_codes(expires_at)`);
       await connection.query(`CREATE INDEX IF NOT EXISTS idx_login_history_user_id ON login_history(user_id)`);
       await connection.query(`CREATE INDEX IF NOT EXISTS idx_login_history_email ON login_history(email)`);
-      await connection.query(`CREATE INDEX IF NOT EXISTS idx_login_history_app_type ON login_history(application_type)`);
       await connection.query(`CREATE INDEX IF NOT EXISTS idx_login_history_time ON login_history(login_time)`);
 
       console.log('Database tables created successfully');

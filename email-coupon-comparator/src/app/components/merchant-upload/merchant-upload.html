@@ -1,0 +1,345 @@
+<div class="merchant-upload-container">
+  <div class="header">
+    <div class="header-info">
+      <h2><i class="bi bi-shop"></i> Merchant Data Upload</h2>
+      <p class="subtitle">Upload any merchant's item data and compare with coupon attachments</p>
+    </div>
+    <ng-container *ngIf="currentMerchant?.store as store">
+      <div class="store-info">
+        <span class="store-name">{{ store.storeName }}</span>
+        <span class="store-address" *ngIf="store.city">{{ store.city }}, {{ store.state }}</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+  </div>
+
+  <div *ngIf="success" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ success }}
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <div class="step" [class.active]="activeStep === 'upload'" [class.completed]="currentMerchant !== null">
+      <div class="step-number">1</div>
+      <div class="step-label">Upload Data</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 'select'" [class.completed]="selectedAttachmentIds.length > 0">
+      <div class="step-number">2</div>
+      <div class="step-label">Select Coupons</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 'compare'" [class.completed]="extractedCoupons.length > 0">
+      <div class="step-number">3</div>
+      <div class="step-label">Compare</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 'results'">
+      <div class="step-number">4</div>
+      <div class="step-label">Results</div>
+    </div>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div *ngIf="activeStep === 'upload'" class="step-content">
+    <div class="upload-section">
+      <div class="upload-card" *ngIf="!currentMerchant">
+        <div class="upload-header">
+          <i class="bi bi-file-earmark-excel"></i>
+          <h4>Upload Merchant Excel File</h4>
+        </div>
+        <p class="upload-description">
+          Upload any merchant's Excel file. The system will auto-detect items, departments, vendors, and other data.
+        </p>
+        
+        <div class="supported-formats">
+          <h5>Supported Formats:</h5>
+          <ul>
+            <li><strong>Item Master:</strong> tblItemMaster, Items, Products, Inventory, SKU</li>
+            <li><strong>Store Info:</strong> tblStores, Stores, Company, Location</li>
+            <li><strong>Departments:</strong> tblDepartments, Departments, Categories</li>
+            <li><strong>Vendors:</strong> tblVendors, Vendors, Suppliers</li>
+            <li><strong>Sales:</strong> tblSales, Sales, Transactions</li>
+          </ul>
+        </div>
+        
+        <div class="file-input-wrapper">
+          <input 
+            type="file" 
+            id="merchantFile" 
+            accept=".xlsx,.xls"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          >
+          <label for="merchantFile" class="file-label">
+            <i class="bi bi-cloud-upload"></i>
+            <span>Choose Excel File</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="data-summary" *ngIf="currentMerchant">
+        <div class="summary-header">
+          <h4><i class="bi bi-check-circle-fill text-success"></i> Data Loaded: {{ currentMerchant.merchantName }}</h4>
+          <button class="btn btn-outline-danger btn-sm" (click)="clearData()">
+            <i class="bi bi-trash"></i> Clear
+          </button>
+        </div>
+        
+        <div class="summary-stats">
+          <div class="stat-card">
+            <i class="bi bi-box-seam"></i>
+            <div>
+              <span class="stat-value">{{ currentMerchant.items.length | number }}</span>
+              <span class="stat-label">Items</span>
+            </div>
+          </div>
+          <div class="stat-card" *ngIf="currentMerchant.departments && currentMerchant.departments.length > 0">
+            <i class="bi bi-folder"></i>
+            <div>
+              <span class="stat-value">{{ currentMerchant.departments.length }}</span>
+              <span class="stat-label">Departments</span>
+            </div>
+          </div>
+          <div class="stat-card" *ngIf="currentMerchant.vendors && currentMerchant.vendors.length > 0">
+            <i class="bi bi-truck"></i>
+            <div>
+              <span class="stat-value">{{ currentMerchant.vendors.length }}</span>
+              <span class="stat-label">Vendors</span>
+            </div>
+          </div>
+          <div class="stat-card" *ngIf="currentMerchant.sales && currentMerchant.sales.length > 0">
+            <i class="bi bi-graph-up"></i>
+            <div>
+              <span class="stat-value">{{ currentMerchant.sales.length }}</span>
+              <span class="stat-label">Sales Records</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="breakdown-section" *ngIf="getCategoryBreakdown().length > 0">
+          <h5>Items by Category</h5>
+          <div class="breakdown-list">
+            <div *ngFor="let cat of getCategoryBreakdown()" class="breakdown-item">
+              <span class="breakdown-name">{{ cat.name }}</span>
+              <span class="breakdown-count">{{ cat.count | number }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-action">
+          <button class="btn btn-outline-primary" (click)="showItemPreview()">
+            <i class="bi bi-eye"></i> Preview Items
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary" (click)="goToStep('select')" [disabled]="!currentMerchant">
+        Next: Select Coupons <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Select Attachments -->
+  <div *ngIf="activeStep === 'select'" class="step-content">
+    <div class="select-header">
+      <h4>Select Coupon Attachments</h4>
+      <p>Choose email attachments containing coupon details to compare with {{ currentMerchant?.merchantName }} items</p>
+    </div>
+
+    <div class="emails-list">
+      <div *ngFor="let email of emails" class="email-card">
+        <div class="email-header-row">
+          <div class="email-info">
+            <h5>{{ email.subject }}</h5>
+            <span class="email-meta">
+              <i class="bi bi-person"></i> {{ email.from_address }}
+              <i class="bi bi-calendar"></i> {{ formatDate(email.date_received) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="attachments-grid" *ngIf="email.attachments && email.attachments.length > 0">
+          <div 
+            *ngFor="let attachment of email.attachments"
+            class="attachment-card"
+            [class.selected]="isAttachmentSelected(attachment.id)"
+            (click)="toggleAttachmentSelection(attachment.id)"
+          >
+            <div class="attachment-select">
+              <i class="bi" [class.bi-check-circle-fill]="isAttachmentSelected(attachment.id)" [class.bi-circle]="!isAttachmentSelected(attachment.id)"></i>
+            </div>
+            <div class="attachment-icon">
+              <i class="bi bi-file-earmark-excel" *ngIf="attachment.content_type?.includes('excel')"></i>
+              <i class="bi bi-file-earmark-pdf" *ngIf="attachment.content_type?.includes('pdf')"></i>
+              <i class="bi bi-file-earmark" *ngIf="!attachment.content_type?.includes('excel') && !attachment.content_type?.includes('pdf')"></i>
+            </div>
+            <div class="attachment-details">
+              <span class="filename">{{ attachment.filename }}</span>
+              <span class="filesize">{{ formatFileSize(attachment.size) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="emails.length === 0" class="no-data">
+        <i class="bi bi-inbox"></i>
+        <p>No emails with attachments found</p>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep('upload')">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <span class="selection-count">{{ selectedAttachmentIds.length }} attachment(s) selected</span>
+      <button class="btn btn-primary" (click)="extractCoupons()" [disabled]="selectedAttachmentIds.length === 0 || loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        Extract Coupons <i class="bi bi-arrow-right" *ngIf="!loading"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Compare -->
+  <div *ngIf="activeStep === 'compare'" class="step-content">
+    <div class="compare-header">
+      <h4>Review & Compare</h4>
+      <p>Review extracted coupons and run comparison against {{ (currentMerchant?.items?.length || 0) | number }} items from {{ currentMerchant?.merchantName }}</p>
+    </div>
+
+    <div class="compare-summary">
+      <div class="summary-card">
+        <i class="bi bi-box-seam"></i>
+        <div>
+          <span class="stat-value">{{ (currentMerchant?.items?.length || 0) | number }}</span>
+          <span class="stat-label">Merchant Items</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <i class="bi bi-ticket-perforated"></i>
+        <div>
+          <span class="stat-value">{{ extractedCoupons.length }}</span>
+          <span class="stat-label">Coupons Extracted</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="coupons-preview" *ngIf="extractedCoupons.length > 0">
+      <h5>Extracted Coupons Preview</h5>
+      <div class="coupons-list">
+        <div *ngFor="let coupon of extractedCoupons | slice:0:10" class="coupon-item">
+          <span class="coupon-code">{{ coupon.couponCode }}</span>
+          <span class="coupon-name">{{ coupon.couponName || coupon.description | slice:0:40 }}</span>
+          <span class="coupon-discount">
+            {{ coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '$' + coupon.discountValue }}
+          </span>
+        </div>
+        <div *ngIf="extractedCoupons.length > 10" class="more-items">
+          And {{ extractedCoupons.length - 10 }} more coupons...
+        </div>
+      </div>
+      <button class="btn btn-outline-primary btn-sm mt-2" (click)="showCouponPreview()">
+        <i class="bi bi-eye"></i> View All Coupons
+      </button>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep('select')">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-success btn-lg" (click)="runComparison()" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <i class="bi bi-play-fill" *ngIf="!loading"></i>
+        Run Comparison
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 4: Results -->
+  <div *ngIf="activeStep === 'results' && comparisonResult" class="step-content">
+    <app-comparison-results [result]="comparisonResult"></app-comparison-results>
+    
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep('compare')">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-success" (click)="exportResults()">
+        <i class="bi bi-download"></i> Export to Excel
+      </button>
+      <button class="btn btn-primary" (click)="clearData()">
+        <i class="bi bi-arrow-repeat"></i> New Comparison
+      </button>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal-overlay" *ngIf="showPreview" (click)="closePreview()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5>{{ previewType === 'items' ? 'Items Preview' : 'Coupons Preview' }}</h5>
+        <button class="btn-close" (click)="closePreview()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="previewType === 'items'" class="preview-table">
+          <table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Vendor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of currentMerchant?.items | slice:0:100">
+                <td>{{ item.itemCode }}</td>
+                <td>{{ item.itemName | slice:0:30 }}</td>
+                <td>{{ item.category || item.department }}</td>
+                <td>{{ item.price | currency }}</td>
+                <td>{{ item.vendor | slice:0:20 }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="currentMerchant && currentMerchant.items.length > 100" class="text-muted text-center mt-2">
+            Showing first 100 of {{ currentMerchant.items.length }} items
+          </div>
+        </div>
+        
+        <div *ngIf="previewType === 'coupons'" class="preview-table">
+          <table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Discount</th>
+                <th>Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let coupon of extractedCoupons">
+                <td><code>{{ coupon.couponCode }}</code></td>
+                <td>{{ coupon.couponName || coupon.description | slice:0:30 }}</td>
+                <td>{{ coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '$' + coupon.discountValue }}</td>
+                <td>{{ coupon.applicableItems?.length || 0 }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner-border text-primary"></div>
+    <p>Processing...</p>
+  </div>
+</div>

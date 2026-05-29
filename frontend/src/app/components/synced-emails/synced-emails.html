@@ -1,0 +1,185 @@
+<div class="synced-emails-container">
+  <header class="page-header">
+    <h1>Synced Emails</h1>
+    <p class="subtitle">Emails automatically captured via cron job</p>
+  </header>
+
+  <!-- Date Filter Section -->
+  <section class="filter-section">
+    <div class="filter-header" (click)="toggleFilters()">
+      <h3>
+        <span class="filter-icon">📅</span>
+        Date Filter
+        <span class="filter-badge" *ngIf="selectedDate || (startDate && endDate)">
+          {{ filterMode === 'single' ? selectedDate : startDate + ' to ' + endDate }}
+        </span>
+      </h3>
+      <span class="toggle-icon">{{ showFilters ? '▼' : '▶' }}</span>
+    </div>
+
+    <div class="filter-body" [class.collapsed]="!showFilters">
+      <div class="filter-mode-toggle">
+        <label class="radio-label">
+          <input type="radio" name="filterMode" value="single" 
+                 [(ngModel)]="filterMode" 
+                 (change)="onFilterModeChange()"
+                 [checked]="filterMode === 'single'">
+          <span>Single Date</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="filterMode" value="range" 
+                 [(ngModel)]="filterMode"
+                 (change)="onFilterModeChange()"
+                 [checked]="filterMode === 'range'">
+          <span>Date Range</span>
+        </label>
+      </div>
+
+      <div class="filter-inputs">
+        <!-- Single Date Filter -->
+        <div class="filter-group" *ngIf="filterMode === 'single'">
+          <label for="selectedDate">Select Date:</label>
+          <input type="date" id="selectedDate" [(ngModel)]="selectedDate" />
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="filter-group range-filter" *ngIf="filterMode === 'range'">
+          <div class="range-input">
+            <label for="startDate">From:</label>
+            <input type="date" id="startDate" [(ngModel)]="startDate" />
+          </div>
+          <div class="range-input">
+            <label for="endDate">To:</label>
+            <input type="date" id="endDate" [(ngModel)]="endDate" />
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary" (click)="applyFilter()">
+          <span class="btn-icon">🔍</span> Apply Filter
+        </button>
+        <button class="btn btn-secondary" (click)="resetFilter()">
+          <span class="btn-icon">🔄</span> Reset to Today
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section" *ngIf="stats">
+    <div class="stat-card">
+      <span class="stat-icon">📧</span>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.total_emails || 0 }}</span>
+        <span class="stat-label">Total Emails</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📎</span>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.total_attachments || 0 }}</span>
+        <span class="stat-label">Attachments</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⏰</span>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.last_cron_run ? formatDate(stats.last_cron_run.completed_at || stats.last_cron_run.started_at) : 'Never' }}</span>
+        <span class="stat-label">Last Sync</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cron History Section -->
+  <section class="cron-history-section" *ngIf="cronHistory.length > 0">
+    <h2>Sync History</h2>
+    <div class="cron-table-wrapper">
+      <table class="cron-table">
+        <thead>
+          <tr>
+            <th>Started</th>
+            <th>Completed</th>
+            <th>Status</th>
+            <th>Processed</th>
+            <th>New</th>
+            <th>Duplicates</th>
+            <th>Attachments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of cronHistory" [ngClass]="getStatusClass(log.status)">
+            <td>{{ formatDate(log.started_at) }}</td>
+            <td>{{ formatDate(log.completed_at) }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(log.status)">
+                {{ log.status }}
+              </span>
+            </td>
+            <td>{{ log.emails_processed || 0 }}</td>
+            <td>{{ log.emails_new || 0 }}</td>
+            <td>{{ log.emails_duplicate || 0 }}</td>
+            <td>{{ log.attachments_saved || 0 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Emails Section -->
+  <section class="emails-section">
+    <h2>Synced Emails ({{ emails.length }})</h2>
+    
+    <div *ngIf="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading synced emails...</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <div *ngIf="!loading && emails.length === 0" class="no-data">
+      <span class="no-data-icon">📭</span>
+      <p>No synced emails found for the selected date.</p>
+    </div>
+
+    <div *ngIf="!loading && emails.length > 0" class="emails-grid">
+      <div class="email-card" *ngFor="let email of emails">
+        <div class="email-header">
+          <span class="email-icon">📧</span>
+          <div class="email-meta">
+            <h3 class="email-subject">{{ email.subject || 'No Subject' }}</h3>
+            <p class="email-from">From: {{ email.from_address }}</p>
+          </div>
+        </div>
+        <div class="email-body">
+          <!-- Show attachments count -->
+          <div class="attachment-count" *ngIf="email.attachment_count > 0">
+            <span class="count-badge">📎 {{ email.attachment_count }} attachment(s)</span>
+          </div>
+          <div class="no-attachment" *ngIf="email.attachment_count === 0">
+            <span class="no-attach-badge">No attachments</span>
+          </div>
+          
+          <!-- Show attachments list -->
+          <div class="attachments-list" *ngIf="email.attachments && email.attachments.length > 0">
+            <div class="attachment-item" *ngFor="let att of email.attachments">
+              <span class="att-icon">{{ getFileIcon(att.content_type, att.filename) }}</span>
+              <span class="filename">{{ att.filename }}</span>
+              <span class="filesize">{{ formatFileSize(att.size) }}</span>
+            </div>
+          </div>
+          
+          <p class="email-date">Received: {{ formatDate(email.date_received) }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <nav class="nav-links">
+    <a routerLink="/home" class="nav-btn">Back to Home</a>
+    <a routerLink="/email-reader" class="nav-btn">Manual Email Search</a>
+  </nav>
+</div>

@@ -2,8 +2,13 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   token?: string;
+  is_admin?: boolean;
+  user_exists?: boolean;
+  dev_otp?: string;
   user?: {
+    id?: number;
     email: string;
+    role?: string;
   };
 }
 

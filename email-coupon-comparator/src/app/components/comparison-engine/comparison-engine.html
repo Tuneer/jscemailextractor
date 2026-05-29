@@ -1,0 +1,242 @@
+<div class="comparison-engine-container">
+  <div class="header">
+    <h2><i class="bi bi-shuffle"></i> Coupon Comparison Engine</h2>
+    <p class="subtitle">Compare merchant items with coupon attachments to find applicable deals</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+  </div>
+
+  <div *ngIf="success" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ success }}
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <div class="step" [class.active]="activeStep === 1" [class.completed]="activeStep > 1">
+      <div class="step-number">1</div>
+      <div class="step-label">Select Attachments</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 2" [class.completed]="activeStep > 2">
+      <div class="step-number">2</div>
+      <div class="step-label">Review Data</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 3">
+      <div class="step-number">3</div>
+      <div class="step-label">Run Comparison</div>
+    </div>
+  </div>
+
+  <!-- Step 1: Select Attachments -->
+  <div *ngIf="activeStep === 1" class="step-content">
+    <div class="step-header">
+      <h4>Select Coupon Attachments</h4>
+      <p>Choose Excel/PDF attachments containing coupon details to compare with your items</p>
+    </div>
+
+    <div *ngIf="loading" class="loading">
+      <div class="spinner-border text-primary"></div>
+      <p>Loading emails...</p>
+    </div>
+
+    <div *ngIf="!loading" class="emails-list">
+      <div *ngFor="let email of emails" class="email-card">
+        <div class="email-header-row">
+          <div class="email-info">
+            <h5>{{ email.subject }}</h5>
+            <span class="email-meta">
+              <i class="bi bi-person"></i> {{ email.from_address }}
+              <i class="bi bi-calendar"></i> {{ formatDate(email.date_received) }}
+            </span>
+          </div>
+          <button 
+            class="btn btn-sm btn-outline-primary"
+            (click)="selectAllAttachmentsFromEmail(email)"
+          >
+            Toggle All
+          </button>
+        </div>
+
+        <div class="attachments-grid">
+          <div 
+            *ngFor="let attachment of email.attachments"
+            class="attachment-card"
+            [class.selected]="isAttachmentSelected(attachment.id)"
+            [class.coupon-file]="attachment.is_coupon_file"
+            (click)="toggleAttachmentSelection(attachment.id)"
+          >
+            <div class="attachment-select">
+              <i class="bi" [class.bi-check-circle-fill]="isAttachmentSelected(attachment.id)" [class.bi-circle]="!isAttachmentSelected(attachment.id)"></i>
+            </div>
+            <div class="attachment-icon">
+              <i class="bi bi-file-earmark-excel" *ngIf="attachment.content_type?.includes('excel')"></i>
+              <i class="bi bi-file-earmark-pdf" *ngIf="attachment.content_type?.includes('pdf')"></i>
+              <i class="bi bi-file-earmark" *ngIf="!attachment.content_type?.includes('excel') && !attachment.content_type?.includes('pdf')"></i>
+            </div>
+            <div class="attachment-details">
+              <span class="filename">{{ attachment.filename }}</span>
+              <span class="filesize">{{ formatFileSize(attachment.size) }}</span>
+              <span class="coupon-badge" *ngIf="attachment.is_coupon_file">
+                <i class="bi bi-tag"></i> Coupon
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="emails.length === 0" class="no-data">
+        <i class="bi bi-inbox"></i>
+        <p>No emails with attachments found</p>
+        <button class="btn btn-primary" (click)="loadEmails()">
+          <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <span class="selection-count">
+        {{ getSelectedAttachmentsCount() }} attachment(s) selected
+      </span>
+      <button 
+        class="btn btn-primary" 
+        (click)="extractCouponsFromAttachments()"
+        [disabled]="selectedAttachmentIds.length === 0 || loading"
+      >
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        Next: Extract Coupons
+        <i class="bi bi-arrow-right" *ngIf="!loading"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Review Extracted Coupons -->
+  <div *ngIf="activeStep === 2" class="step-content">
+    <div class="step-header">
+      <h4>Review Extracted Coupons</h4>
+      <p>Review the coupons extracted from selected attachments</p>
+    </div>
+
+    <div class="coupons-summary">
+      <div class="summary-card">
+        <i class="bi bi-ticket-perforated"></i>
+        <div>
+          <span class="count">{{ extractedCoupons.length }}</span>
+          <span class="label">Coupons Found</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <i class="bi bi-percent"></i>
+        <div>
+          <span class="count">{{ extractedCoupons.filter(c => c.discountType === 'percentage').length }}</span>
+          <span class="label">Percentage</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <i class="bi bi-cash"></i>
+        <div>
+          <span class="count">{{ extractedCoupons.filter(c => c.discountType === 'fixed').length }}</span>
+          <span class="label">Fixed Amount</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="coupons-list" *ngIf="extractedCoupons.length > 0">
+      <div *ngFor="let coupon of extractedCoupons | slice:0:10" class="coupon-item">
+        <div class="coupon-code">{{ coupon.couponCode }}</div>
+        <div class="coupon-details">
+          <span class="coupon-name">{{ coupon.couponName || 'No name' }}</span>
+          <span class="coupon-discount">
+            {{ coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '$' + coupon.discountValue }}
+          </span>
+        </div>
+        <div class="coupon-meta" *ngIf="coupon.applicableItems && coupon.applicableItems.length > 0">
+          <small><i class="bi bi-box"></i> {{ coupon.applicableItems.length }} item(s)</small>
+        </div>
+      </div>
+      <div *ngIf="extractedCoupons.length > 10" class="text-muted text-center mt-2">
+        And {{ extractedCoupons.length - 10 }} more coupons...
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep(1)">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-primary" (click)="goToStep(3)">
+        Next: Configure Comparison
+        <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Run Comparison -->
+  <div *ngIf="activeStep === 3" class="step-content">
+    <div class="step-header">
+      <h4>Run Comparison</h4>
+      <p>Configure and execute the coupon comparison</p>
+    </div>
+
+    <div class="comparison-config">
+      <div class="config-section">
+        <h5>Merchant Data</h5>
+        <div class="data-status" [class.has-data]="currentMerchant && currentMerchant.items.length > 0">
+          <i class="bi" [class.bi-check-circle-fill]="currentMerchant && currentMerchant.items.length > 0" [class.bi-x-circle-fill]="!currentMerchant || currentMerchant.items.length === 0"></i>
+          <div>
+            <span class="status-label">Items Data</span>
+            <span class="status-value">{{ (currentMerchant?.items?.length || 0) }} items</span>
+          </div>
+        </div>
+        <div class="data-status" [class.has-data]="currentMerchant && currentMerchant.sales.length > 0">
+          <i class="bi" [class.bi-check-circle-fill]="currentMerchant && currentMerchant.sales.length > 0" [class.bi-x-circle-fill]="!currentMerchant || currentMerchant.sales.length === 0"></i>
+          <div>
+            <span class="status-label">Sales Data</span>
+            <span class="status-value">{{ (currentMerchant?.sales?.length || 0) }} records</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h5>Comparison Options</h5>
+        <div class="option-group">
+          <label class="option-label">
+            <input type="radio" [(ngModel)]="comparisonType" value="items_only">
+            <span>Compare with Items Only</span>
+            <small>Match coupons to items based on item codes and categories</small>
+          </label>
+          <label class="option-label">
+            <input type="radio" [(ngModel)]="comparisonType" value="items_and_sales">
+            <span>Compare with Items & Sales Data</span>
+            <small>Include sales volume in savings calculations</small>
+          </label>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h5>Selected Attachments</h5>
+        <div class="selected-count">
+          <i class="bi bi-paperclip"></i>
+          {{ selectedAttachmentIds.length }} attachment(s) selected
+          <button class="btn btn-sm btn-link" (click)="goToStep(1)">Change</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep(2)">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button 
+        class="btn btn-success btn-lg" 
+        (click)="runComparison()"
+        [disabled]="!currentMerchant || currentMerchant.items.length === 0 || loading"
+      >
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <i class="bi bi-play-fill" *ngIf="!loading"></i>
+        Run Comparison
+      </button>
+    </div>
+  </div>
+</div>

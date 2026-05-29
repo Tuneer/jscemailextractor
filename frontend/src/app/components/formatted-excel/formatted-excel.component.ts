@@ -47,7 +47,8 @@ export class FormattedExcelComponent implements OnInit {
       next: (response) => {
         this.loading = false;
         if (response.success) {
-          this.emails = response.emails.filter(email => email.attachment_id); // Only emails with attachments
+          // Filter emails that have attachments
+          this.emails = response.emails.filter(email => email.attachments && email.attachments.length > 0);
           if (this.emails.length === 0) {
             this.showMessage('No emails with attachments found in the database.', 'info');
           }
@@ -85,18 +86,19 @@ export class FormattedExcelComponent implements OnInit {
   }
 
   exportFormattedExcel(): void {
-    if (!this.selectedEmail) {
+    if (!this.selectedEmail || !this.selectedEmail.attachments || this.selectedEmail.attachments.length === 0) {
       this.showMessage('Please select an email with attachment', 'error');
       return;
     }
 
     this.processing = true;
     const templateId = this.selectedTemplate?.id;
+    const firstAttachment = this.selectedEmail.attachments[0];
 
     this.dataService.exportFormattedExcel(
-      this.selectedEmail.attachment_id,
+      firstAttachment.id,
       templateId,
-      `${this.selectedEmail.filename}_formatted.xlsx`
+      `${firstAttachment.filename}_formatted.xlsx`
     ).subscribe({
       next: (response) => {
         this.processing = false;
@@ -105,7 +107,7 @@ export class FormattedExcelComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.selectedEmail?.filename}_formatted.xlsx`;
+        a.download = `${firstAttachment.filename}_formatted.xlsx`;
         a.click();
         window.URL.revokeObjectURL(url);
         

@@ -38,7 +38,12 @@
             <h3>{{ email.subject }}</h3>
             <p><strong>From:</strong> {{ email.from_address }}</p>
             <p><strong>Date:</strong> {{ formatDate(email.date_received) }}</p>
-            <p><strong>Attachment:</strong> {{ email.filename }} ({{ email.size | number }} bytes)</p>
+            <p><strong>Attachments:</strong> {{ email.attachment_count }} file(s)</p>
+            <div *ngIf="email.attachments && email.attachments.length > 0" class="attachment-list">
+              <span *ngFor="let att of email.attachments" class="attachment-tag">
+                {{ att.filename }} ({{ att.size | number }} bytes)
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -11,12 +11,17 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent implements OnInit {
-  email: string = '';
+export class RegisterComponent {
+  // Form fields
   username: string = '';
+  email: string = '';
   password: string = '';
-  otp: string = '';
+  confirmPassword: string = '';
+  fullName: string = '';
+  phone: string = '';
+  
   step: 'register' | 'otp' = 'register';
+  otp: string = '';
   loading: boolean = false;
   message: string = '';
   messageType: 'success' | 'error' | 'info' = 'info';
@@ -26,65 +31,85 @@ export class RegisterComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit(): void {}
-
-  register(): void {
-    if (!this.email || !this.username || !this.password) {
-      this.showMessage('Please fill in all required fields', 'error');
+  sendOTP(): void {
+    if (!this.username.trim()) {
+      this.showMessage('Please enter a username', 'error');
       return;
     }
-
-    if (!this.validateEmail(this.email)) {
+    if (!this.email || !this.validateEmail(this.email)) {
       this.showMessage('Please enter a valid email address', 'error');
       return;
     }
-
-    if (this.password.length < 6) {
-      this.showMessage('Password must be at least 6 characters long', 'error');
+    if (!this.fullName.trim()) {
+      this.showMessage('Please enter your full name', 'error');
+      return;
+    }
+    if (!this.password || this.password.length < 6) {
+      this.showMessage('Password must be at least 6 characters', 'error');
+      return;
+    }
+    if (this.password !== this.confirmPassword) {
+      this.showMessage('Passwords do not match', 'error');
       return;
     }
 
     this.loading = true;
     this.message = '';
 
-    // For now, we'll just request an OTP for registration
-    // In a real system, you'd have a separate registration endpoint
     this.authService.requestOTP(this.email).subscribe({
       next: (response) => {
         this.loading = false;
         if (response.success) {
           this.step = 'otp';
-          this.showMessage('Registration OTP sent to your email. Please check your inbox.', 'success');
+          this.showMessage('OTP sent to your email. Please verify.', 'success');
+          if (response.dev_otp) {
+            console.log('Dev OTP:', response.dev_otp);
+          }
         } else {
           this.showMessage(response.message || 'Failed to send OTP', 'error');
         }
       },
       error: (error) => {
         this.loading = false;
-        this.showMessage(error.error?.message || 'Failed to send OTP. Please try again.', 'error');
+        this.showMessage(error.error?.message || 'Failed to send OTP.', 'error');
       }
     });
   }
 
-  verifyOTP(): void {
-    if (!this.otp || this.otp.length !== 6) {
-      this.showMessage('Please enter a valid 6-digit OTP', 'error');
+  verifyAndRegister(): void {
+    if (!this.otp || this.otp.length < 6) {
+      this.showMessage('Please enter the OTP', 'error');
       return;
     }
 
     this.loading = true;
     this.message = '';
 
-    // Verify the OTP and complete registration
+    // First verify OTP, then create user with password
     this.authService.verifyOTP(this.email, this.otp).subscribe({
       next: (response) => {
-        this.loading = false;
         if (response.success) {
-          this.showMessage('Registration successful! Redirecting...', 'success');
-          setTimeout(() => {
-            this.router.navigate(['/dashboard']);
-          }, 1500);
+          // OTP verified, now set password
+          this.authService.setPassword(this.email, this.username, this.password, this.fullName, this.phone).subscribe({
+            next: (res) => {
+              this.loading = false;
+              if (res.success) {
+                this.showMessage('Registration successful! Redirecting...', 'success');
+                localStorage.setItem('user_role', 'user');
+                setTimeout(() => {
+                  this.router.navigate(['/home']);
+                }, 1000);
+              } else {
+                this.showMessage(res.message || 'Failed to set password', 'error');
+              }
+            },
+            error: (err) => {
+              this.loading = false;
+              this.showMessage(err.error?.message || 'Failed to set password', 'error');
+            }
+          });
         } else {
+          this.loading = false;
           this.showMessage(response.message || 'Invalid OTP', 'error');
         }
       },

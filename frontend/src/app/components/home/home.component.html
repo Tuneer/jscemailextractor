@@ -16,9 +16,8 @@
         <span>Email Extractor</span>
       </div>
       <div class="nav-controls">
-        <app-theme-toggle></app-theme-toggle>
         <div class="nav-user">
-          <a [routerLink]="['/dashboard']" class="nav-link">Dashboard</a>
+          <a *ngIf="isAdmin" [routerLink]="['/admin/dashboard']" class="nav-link">Admin</a>
           <a [routerLink]="['/developer-contact']" class="nav-link">Developer Contact</a>
           <span class="user-email">{{ userEmail }}</span>
           <button class="btn-logout" (click)="logout()">Logout</button>
@@ -32,7 +31,62 @@
     <p class="hero-subtitle">Extract and analyze email attachments with powerful tools</p>
   </div>
 
+  <!-- Business Verticals Section (Merged from Dashboard) -->
+  <div class="verticals-section" *ngIf="businessVerticals.length > 0">
+    <div class="verticals-header">
+      <h2>
+        <span class="verticals-icon">🏢</span>
+        Business Categories
+        <span class="verticals-count">{{ businessVerticals.length }}</span>
+      </h2>
+    </div>
+    
+    <div class="verticals-grid">
+      <div class="vertical-card" 
+           *ngFor="let vertical of businessVerticals" 
+           (click)="selectVertical(vertical)">
+        <div class="vertical-icon">
+          <span class="icon">{{ getVerticalIcon(vertical.name) }}</span>
+        </div>
+        <div class="vertical-content">
+          <h3 class="vertical-name">{{ vertical.name }}</h3>
+          <p class="vertical-description">{{ vertical.description }}</p>
+        </div>
+        <div class="vertical-arrow">→</div>
+      </div>
+    </div>
+  </div>
+
   <div class="features-container">
+    <!-- Synced Emails -->
+    <div class="feature-card" routerLink="/synced-emails">
+      <div class="feature-icon">
+        <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#E8FFF0"/>
+          <path d="M30 40H70V60H30V40Z" stroke="#10B981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M30 40L50 52L70 40" stroke="#10B981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="50" cy="35" r="8" fill="#10B981"/>
+          <path d="M50 27V35" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h2 class="feature-title">Synced Emails</h2>
+      <p class="feature-description">
+        View emails automatically captured via cron job. Filter by date or date range to find synced emails.
+      </p>
+      <div class="feature-highlights">
+        <span class="highlight-badge">Auto Sync</span>
+        <span class="highlight-badge">Date Filter</span>
+        <span class="highlight-badge">Cron History</span>
+      </div>
+      <button class="btn-feature btn-success">
+        View Synced Emails
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Email Reader -->
     <div class="feature-card" routerLink="/email-reader">
       <div class="feature-icon">
         <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -60,6 +114,7 @@
       </button>
     </div>
 
+    <!-- Email Results -->
     <div class="feature-card" routerLink="/email-results" [state]="{results: null}">
       <div class="feature-icon">
         <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -89,7 +144,8 @@
       </button>
     </div>
 
-    <div class="feature-card" (click)="navigateToFormattedExcel()">
+    <!-- Formatted Excel Export - Hidden -->
+    <!-- <div class="feature-card" (click)="navigateToFormattedExcel()">
       <div class="feature-icon">
         <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="45" fill="#FFE8E8"/>
@@ -113,6 +169,33 @@
       </div>
       <button class="btn-feature">
         Export Formatted Excel
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div> -->
+
+    <!-- Admin Portal -->
+    <div class="feature-card" *ngIf="isAdmin" routerLink="/admin/dashboard">
+      <div class="feature-icon">
+        <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="45" fill="#F0F8FF"/>
+          <circle cx="50" cy="35" r="12" stroke="#3B82F6" stroke-width="4"/>
+          <path d="M30 70C30 58 40 55 50 55C60 55 70 58 70 70" stroke="#3B82F6" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="70" cy="35" r="6" fill="#EF4444"/>
+        </svg>
+      </div>
+      <h2 class="feature-title">Admin Portal</h2>
+      <p class="feature-description">
+        Manage business verticals, merchants, and bulk upload data. Admin-only access.
+      </p>
+      <div class="feature-highlights">
+        <span class="highlight-badge">Admin Access</span>
+        <span class="highlight-badge">Bulk Upload</span>
+        <span class="highlight-badge">Management</span>
+      </div>
+      <button class="btn-feature btn-info">
+        Admin Dashboard
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

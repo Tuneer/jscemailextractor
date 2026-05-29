@@ -299,6 +299,84 @@ router.get('/price-comparisons/item/:itemId/merchant/:merchantId', authMiddlewar
   }
 });
 
+// Get cron job history
+router.get('/cron-history', authMiddleware, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const db = await dbService.getConnection();
+
+    const [history] = await db.query(
+      `SELECT id, job_name, started_at, completed_at, status, 
+              emails_processed, emails_new, emails_duplicate, attachments_saved, error_message
+       FROM cron_job_logs 
+       ORDER BY started_at DESC 
+       LIMIT ?`,
+      [limit]
+    );
+
+    res.json({
+      success: true,
+      history: history,
+      count: history.length
+    });
+  } catch (error) {
+    console.error('Error getting cron history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get cron history',
+      error: error.message
+    });
+  }
+});
+
+// Get automation status/stats
+router.get('/status', authMiddleware, async (req, res) => {
+  try {
+    const db = await dbService.getConnection();
+
+    // Get total email counts
+    const [emailCount] = await db.query(
+      `SELECT COUNT(*) as total FROM email_automation`
+    );
+
+    // Get total attachment counts
+    const [attachmentCount] = await db.query(
+      `SELECT COUNT(*) as total FROM email_attachments`
+    );
+
+    // Get last cron run
+    const [lastRun] = await db.query(
+      `SELECT * FROM cron_job_logs ORDER BY started_at DESC LIMIT 1`
+    );
+
+    // Get emails by date (last 7 days)
+    const [emailsByDate] = await db.query(
+      `SELECT DATE(created_at) as date, COUNT(*) as count 
+       FROM email_automation 
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+       GROUP BY DATE(created_at)
+       ORDER BY date DESC`
+    );
+
+    res.json({
+      success: true,
+      stats: {
+        totalEmails: emailCount[0]?.total || 0,
+        totalAttachments: attachmentCount[0]?.total || 0,
+        lastCronRun: lastRun[0] || null,
+        emailsByDate: emailsByDate
+      }
+    });
+  } catch (error) {
+    console.error('Error getting automation status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get automation status',
+      error: error.message
+    });
+  }
+});
+
 // Get sales analytics summary
 router.get('/analytics/:merchantId/family/:familyId', authMiddleware, async (req, res) => {
   try {

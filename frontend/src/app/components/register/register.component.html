@@ -2,38 +2,15 @@
   <div class="register-card">
     <div class="register-header">
       <div class="logo">
-        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="60" height="60" rx="12" fill="url(#gradient)"/>
-          <path d="M15 20L30 30L45 20V40C45 41.1046 44.1046 42 43 42H17C15.8954 42 15 41.1046 15 40V20Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M45 20L30 30L15 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="gradient" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#667eea"/>
-              <stop offset="1" stop-color="#764ba2"/>
-            </linearGradient>
-          </defs>
-        </svg>
+        <h2>Email Extractor</h2>
       </div>
       <h1>Create Account</h1>
-      <p class="subtitle">Sign up for Email Extractor</p>
+      <p class="subtitle">Register with verification</p>
     </div>
 
     <div class="register-body">
-      <!-- Registration Step -->
+      <!-- Registration Form -->
       <div *ngIf="step === 'register'" class="form-step">
-        <div class="form-group">
-          <label for="email">Email Address *</label>
-          <input 
-            type="email" 
-            id="email" 
-            [(ngModel)]="email" 
-            placeholder="Enter your email"
-            [disabled]="loading"
-            (keyup.enter)="register()"
-            class="input-field"
-          />
-        </div>
-
         <div class="form-group">
           <label for="username">Username *</label>
           <input 
@@ -42,7 +19,43 @@
             [(ngModel)]="username" 
             placeholder="Choose a username"
             [disabled]="loading"
-            (keyup.enter)="register()"
+            class="input-field"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="fullName">Full Name *</label>
+          <input 
+            type="text" 
+            id="fullName" 
+            [(ngModel)]="fullName" 
+            placeholder="Enter your full name"
+            [disabled]="loading"
+            class="input-field"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input 
+            type="email" 
+            id="email" 
+            [(ngModel)]="email" 
+            placeholder="Enter your email"
+            [disabled]="loading"
+            (keyup.enter)="sendOTP()"
+            class="input-field"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            [(ngModel)]="phone" 
+            placeholder="Enter phone number (optional)"
+            [disabled]="loading"
             class="input-field"
           />
         </div>
@@ -53,28 +66,40 @@
             type="password" 
             id="password" 
             [(ngModel)]="password" 
-            placeholder="Create a password"
+            placeholder="Create password (min 6 characters)"
             [disabled]="loading"
-            (keyup.enter)="register()"
+            class="input-field"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password *</label>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            [(ngModel)]="confirmPassword" 
+            placeholder="Confirm your password"
+            [disabled]="loading"
+            (keyup.enter)="sendOTP()"
             class="input-field"
           />
         </div>
 
         <button 
           class="btn btn-primary" 
-          (click)="register()"
-          [disabled]="loading || !email || !username || !password"
+          (click)="sendOTP()"
+          [disabled]="loading || !username || !email || !fullName || !password || !confirmPassword"
         >
-          <span *ngIf="!loading">Continue</span>
+          <span *ngIf="!loading">Send OTP</span>
           <span *ngIf="loading" class="loading-spinner"></span>
         </button>
 
         <p class="info-text">
-          By registering, you agree to our Terms of Service and Privacy Policy
+          We'll send OTP to verify your email
         </p>
       </div>
 
-      <!-- OTP Step -->
+      <!-- OTP Verification -->
       <div *ngIf="step === 'otp'" class="form-step">
         <div class="otp-info">
           <p>OTP sent to <strong>{{ email }}</strong></p>
@@ -82,7 +107,7 @@
         </div>
 
         <div class="form-group">
-          <label for="otp">Enter OTP</label>
+          <label for="otp">Enter OTP *</label>
           <input 
             type="text" 
             id="otp" 
@@ -90,31 +115,31 @@
             placeholder="000000"
             maxlength="6"
             [disabled]="loading"
-            (keyup.enter)="verifyOTP()"
+            (keyup.enter)="verifyAndRegister()"
             class="input-field otp-input"
           />
         </div>
 
         <button 
-          class="btn btn-primary" 
-          (click)="verifyOTP()"
-          [disabled]="loading || otp.length !== 6"
-        >
-          <span *ngIf="!loading">Verify & Complete Registration</span>
-          <span *ngIf="loading" class="loading-spinner"></span>
-        </button>
-
-        <button 
           class="btn btn-secondary" 
-          (click)="register()"
+          (click)="sendOTP()"
           [disabled]="loading"
         >
           Resend OTP
         </button>
+
+        <button 
+          class="btn btn-primary" 
+          (click)="verifyAndRegister()"
+          [disabled]="loading || otp.length < 6"
+        >
+          <span *ngIf="!loading">Verify & Register</span>
+          <span *ngIf="loading" class="loading-spinner"></span>
+        </button>
       </div>
 
       <!-- Message Display -->
-      <div *ngIf="message" class="message" [ngClass]="'message-' + messageType">
+      <div *ngIf="message" class="message" [class]="'message-' + messageType">
         <span class="message-icon">
           <span *ngIf="messageType === 'success'">✓</span>
           <span *ngIf="messageType === 'error'">✗</span>

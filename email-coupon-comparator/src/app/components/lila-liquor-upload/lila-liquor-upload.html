@@ -1,0 +1,256 @@
+<div class="lila-liquor-container">
+  <div class="header">
+    <div class="header-info">
+      <h2><i class="bi bi-shop"></i> Lila Wine & Spirits</h2>
+      <p class="subtitle">Upload item data and compare with coupon attachments</p>
+    </div>
+    <div class="store-info" *ngIf="currentData">
+      <span class="store-name">{{ currentData.store.StoreName }}</span>
+      <span class="store-address">{{ currentData.store.AddrCity }}, {{ currentData.store.AddrState }}</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+  </div>
+
+  <div *ngIf="success" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ success }}
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <div class="step" [class.active]="activeStep === 'upload'" [class.completed]="currentData !== null">
+      <div class="step-number">1</div>
+      <div class="step-label">Upload Data</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 'select'" [class.completed]="selectedAttachmentIds.length > 0">
+      <div class="step-number">2</div>
+      <div class="step-label">Select Coupons</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 'compare'" [class.completed]="extractedCoupons.length > 0">
+      <div class="step-number">3</div>
+      <div class="step-label">Compare</div>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step" [class.active]="activeStep === 'results'">
+      <div class="step-number">4</div>
+      <div class="step-label">Results</div>
+    </div>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div *ngIf="activeStep === 'upload'" class="step-content">
+    <div class="upload-section">
+      <div class="upload-card" *ngIf="!currentData">
+        <div class="upload-header">
+          <i class="bi bi-file-earmark-excel"></i>
+          <h4>Upload Lila Liquor Excel File</h4>
+        </div>
+        <p class="upload-description">
+          Upload the Lila Liquor ItemRelated tables Excel file containing tblItemMaster, tblStores, tblDepartments, etc.
+        </p>
+        
+        <div class="file-input-wrapper">
+          <input 
+            type="file" 
+            id="lilaFile" 
+            accept=".xlsx,.xls"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          >
+          <label for="lilaFile" class="file-label">
+            <i class="bi bi-cloud-upload"></i>
+            <span>Choose Excel File</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="data-summary" *ngIf="currentData">
+        <div class="summary-header">
+          <h4><i class="bi bi-check-circle-fill text-success"></i> Data Loaded</h4>
+          <button class="btn btn-outline-danger btn-sm" (click)="clearData()">
+            <i class="bi bi-trash"></i> Clear
+          </button>
+        </div>
+        
+        <div class="summary-stats">
+          <div class="stat-card">
+            <i class="bi bi-box-seam"></i>
+            <div>
+              <span class="stat-value">{{ currentData.itemCount | number }}</span>
+              <span class="stat-label">Items</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="bi bi-folder"></i>
+            <div>
+              <span class="stat-value">{{ currentData.departments.length }}</span>
+              <span class="stat-label">Departments</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="bi bi-truck"></i>
+            <div>
+              <span class="stat-value">{{ currentData.vendors.length }}</span>
+              <span class="stat-label">Vendors</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="department-breakdown">
+          <h5>Items by Department</h5>
+          <div class="dept-list">
+            <div *ngFor="let dept of getDepartmentBreakdown()" class="dept-item">
+              <span class="dept-name">{{ dept.name }}</span>
+              <span class="dept-count">{{ dept.count | number }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary" (click)="goToStep('select')" [disabled]="!currentData">
+        Next: Select Coupons <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Select Attachments -->
+  <div *ngIf="activeStep === 'select'" class="step-content">
+    <div class="select-header">
+      <h4>Select Coupon Attachments</h4>
+      <p>Choose email attachments containing coupon details to compare with Lila Liquor items</p>
+    </div>
+
+    <div class="emails-list">
+      <div *ngFor="let email of emails" class="email-card">
+        <div class="email-header-row">
+          <div class="email-info">
+            <h5>{{ email.subject }}</h5>
+            <span class="email-meta">
+              <i class="bi bi-person"></i> {{ email.from_address }}
+              <i class="bi bi-calendar"></i> {{ formatDate(email.date_received) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="attachments-grid" *ngIf="email.attachments && email.attachments.length > 0">
+          <div 
+            *ngFor="let attachment of email.attachments"
+            class="attachment-card"
+            [class.selected]="isAttachmentSelected(attachment.id)"
+            (click)="toggleAttachmentSelection(attachment.id)"
+          >
+            <div class="attachment-select">
+              <i class="bi" [class.bi-check-circle-fill]="isAttachmentSelected(attachment.id)" [class.bi-circle]="!isAttachmentSelected(attachment.id)"></i>
+            </div>
+            <div class="attachment-icon">
+              <i class="bi bi-file-earmark-excel" *ngIf="attachment.content_type?.includes('excel')"></i>
+              <i class="bi bi-file-earmark-pdf" *ngIf="attachment.content_type?.includes('pdf')"></i>
+              <i class="bi bi-file-earmark" *ngIf="!attachment.content_type?.includes('excel') && !attachment.content_type?.includes('pdf')"></i>
+            </div>
+            <div class="attachment-details">
+              <span class="filename">{{ attachment.filename }}</span>
+              <span class="filesize">{{ formatFileSize(attachment.size) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="emails.length === 0" class="no-data">
+        <i class="bi bi-inbox"></i>
+        <p>No emails with attachments found</p>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep('upload')">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <span class="selection-count">{{ selectedAttachmentIds.length }} attachment(s) selected</span>
+      <button class="btn btn-primary" (click)="extractCoupons()" [disabled]="selectedAttachmentIds.length === 0 || loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        Extract Coupons <i class="bi bi-arrow-right" *ngIf="!loading"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Compare -->
+  <div *ngIf="activeStep === 'compare'" class="step-content">
+    <div class="compare-header">
+      <h4>Review & Compare</h4>
+      <p>Review extracted coupons and run comparison against {{ currentData?.itemCount }} items</p>
+    </div>
+
+    <div class="compare-summary">
+      <div class="summary-card">
+        <i class="bi bi-box-seam"></i>
+        <div>
+          <span class="stat-value">{{ currentData?.itemCount | number }}</span>
+          <span class="stat-label">Lila Liquor Items</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <i class="bi bi-ticket-perforated"></i>
+        <div>
+          <span class="stat-value">{{ extractedCoupons.length }}</span>
+          <span class="stat-label">Coupons Extracted</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="coupons-preview" *ngIf="extractedCoupons.length > 0">
+      <h5>Extracted Coupons Preview</h5>
+      <div class="coupons-list">
+        <div *ngFor="let coupon of extractedCoupons | slice:0:10" class="coupon-item">
+          <span class="coupon-code">{{ coupon.couponCode }}</span>
+          <span class="coupon-name">{{ coupon.couponName || coupon.description | slice:0:40 }}</span>
+          <span class="coupon-discount">
+            {{ coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '$' + coupon.discountValue }}
+          </span>
+        </div>
+        <div *ngIf="extractedCoupons.length > 10" class="more-items">
+          And {{ extractedCoupons.length - 10 }} more coupons...
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep('select')">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-success btn-lg" (click)="runComparison()" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <i class="bi bi-play-fill" *ngIf="!loading"></i>
+        Run Comparison
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 4: Results -->
+  <div *ngIf="activeStep === 'results' && comparisonResult" class="step-content">
+    <app-comparison-results [result]="comparisonResult"></app-comparison-results>
+    
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary" (click)="goToStep('compare')">
+        <i class="bi bi-arrow-left"></i> Back
+      </button>
+      <button class="btn btn-success" (click)="exportResults()">
+        <i class="bi bi-download"></i> Export to Excel
+      </button>
+      <button class="btn btn-primary" (click)="clearData()">
+        <i class="bi bi-arrow-repeat"></i> Start New Comparison
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner-border text-primary"></div>
+    <p>Processing...</p>
+  </div>
+</div>

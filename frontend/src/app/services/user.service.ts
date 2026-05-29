@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface BusinessVertical {
   id: number;
@@ -52,7 +53,7 @@ export interface MerchantApplication {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/user';
+  private apiUrl = environment.apiUrl;
   private tokenKey = 'auth_token';
 
   constructor(private http: HttpClient) {}
@@ -67,28 +68,28 @@ export class UserService {
 
   // Get all business verticals for the user
   getBusinessVerticals(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/business-verticals`, { 
+    return this.http.get(`${this.apiUrl}/user/business-verticals`, { 
       headers: this.getAuthHeaders() 
     });
   }
 
   // Get merchants by business vertical
   getMerchantsByVertical(verticalId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/merchants/vertical/${verticalId}`, { 
+    return this.http.get(`${this.apiUrl}/user/merchants/vertical/${verticalId}`, { 
       headers: this.getAuthHeaders() 
     });
   }
 
   // Get applications for a specific merchant
   getMerchantApplications(merchantId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/merchants/${merchantId}/applications`, { 
+    return this.http.get(`${this.apiUrl}/user/merchants/${merchantId}/applications`, { 
       headers: this.getAuthHeaders() 
     });
   }
 
   // Get merchant details
   getMerchant(merchantId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/merchants/${merchantId}`, { 
+    return this.http.get(`${this.apiUrl}/user/merchants/${merchantId}`, { 
       headers: this.getAuthHeaders() 
     });
   }

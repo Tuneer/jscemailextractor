@@ -2,14 +2,92 @@
   <!-- Header -->
   <header class="admin-header">
     <div class="header-content">
-      <h1 class="dashboard-title">🛡️ Admin Dashboard</h1>
-      <p class="dashboard-subtitle">Business Management Portal</p>
+      <h1 class="dashboard-title">Admin Dashboard</h1>
+      <p class="dashboard-subtitle">Complete Application Management</p>
     </div>
     <div class="header-actions">
       <span class="user-info">Welcome, {{ user?.fullName || user?.username }}</span>
       <button class="btn btn-secondary" (click)="logout()">Logout</button>
     </div>
   </header>
+
+  <!-- All Features Section -->
+  <div class="all-features-section" *ngIf="!loading">
+    <h2 class="section-title">All Features</h2>
+    <div class="features-grid">
+      <!-- Synced Emails -->
+      <div class="feature-card" routerLink="/synced-emails">
+        <div class="feature-icon green">
+          <span>&#128229;</span>
+        </div>
+        <div class="feature-info">
+          <h3>Synced Emails</h3>
+          <p>View auto-captured emails from cron job</p>
+        </div>
+        <div class="feature-arrow">&#8594;</div>
+      </div>
+
+      <!-- Email Reader -->
+      <div class="feature-card" routerLink="/email-reader">
+        <div class="feature-icon purple">
+          <span>&#128231;</span>
+        </div>
+        <div class="feature-info">
+          <h3>Email Reader</h3>
+          <p>Search Gmail with IMAP connection</p>
+        </div>
+        <div class="feature-arrow">&#8594;</div>
+      </div>
+
+      <!-- Email Results -->
+      <div class="feature-card" routerLink="/email-results">
+        <div class="feature-icon blue">
+          <span>&#128202;</span>
+        </div>
+        <div class="feature-info">
+          <h3>Email Results</h3>
+          <p>View extracted attachment data</p>
+        </div>
+        <div class="feature-arrow">&#8594;</div>
+      </div>
+
+      <!-- Formatted Excel - Hidden -->
+      <!-- <div class="feature-card" routerLink="/formatted-excel">
+        <div class="feature-icon red">
+          <span>&#128196;</span>
+        </div>
+        <div class="feature-info">
+          <h3>Formatted Excel</h3>
+          <p>Export with custom templates</p>
+        </div>
+        <div class="feature-arrow">&#8594;</div>
+      </div> -->
+
+      <!-- Home / Business Dashboard -->
+      <div class="feature-card" routerLink="/home">
+        <div class="feature-icon orange">
+          <span>&#127968;</span>
+        </div>
+        <div class="feature-info">
+          <h3>Home</h3>
+          <p>Main dashboard with all features</p>
+        </div>
+        <div class="feature-arrow">&#8594;</div>
+      </div>
+
+      <!-- Admin Management -->
+      <div class="feature-card active-card" (click)="scrollToManagement()">
+        <div class="feature-icon teal">
+          <span>&#9881;</span>
+        </div>
+        <div class="feature-info">
+          <h3>Admin Management</h3>
+          <p>Manage verticals & merchants</p>
+        </div>
+        <div class="feature-arrow">&#8595;</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Error Message -->
   <div class="alert alert-error" *ngIf="error">

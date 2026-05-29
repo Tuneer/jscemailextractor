@@ -37,13 +37,17 @@ CREATE TABLE IF NOT EXISTS merchant_templates (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- User management tables
+-- User management tables (unified for both admin and regular users)
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   username VARCHAR(255),
   password_hash VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255),
+  phone VARCHAR(20),
+  role ENUM('user', 'manager', 'admin', 'super_admin') DEFAULT 'user',
   is_active BOOLEAN DEFAULT TRUE,
+  last_login TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -107,20 +111,6 @@ CREATE TABLE IF NOT EXISTS merchants (
   FOREIGN KEY (business_vertical_id) REFERENCES business_verticals(id) ON DELETE SET NULL
 );
 
--- Admin user management
-CREATE TABLE IF NOT EXISTS admin_users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(255) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  full_name VARCHAR(255),
-  role ENUM('super_admin', 'admin', 'manager') DEFAULT 'admin',
-  is_active BOOLEAN DEFAULT TRUE,
-  last_login TIMESTAMP NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
 -- Merchant applications linking
 CREATE TABLE IF NOT EXISTS merchant_applications (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -137,6 +127,7 @@ CREATE TABLE IF NOT EXISTS merchant_applications (
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_otp_email ON otp_codes(email);
 CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_codes(expires_at);
 CREATE INDEX IF NOT EXISTS idx_login_history_user_id ON login_history(user_id);
@@ -159,9 +150,9 @@ INSERT INTO business_verticals (name, description) VALUES
 ('Liquor', 'Alcohol retail stores, bars, and liquor distribution'),
 ('Boutique', 'Fashion retail stores, clothing boutiques, and specialty shops');
 
--- Insert default admin user (password: admin123)
-INSERT INTO admin_users (username, email, password_hash, full_name, role) VALUES
-('admin', 'admin@jscglobalsolutions.info', '$2b$10$hashedpasswordexample', 'System Administrator', 'super_admin');
+-- Insert default admin user (OTP: 123456)
+INSERT INTO users (email, username, password_hash, full_name, role) VALUES
+('admin@jscglobalsolutions.info', 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', 'super_admin');
 
 -- Insert your actual merchants from merchants.xlsx
 INSERT INTO merchants (business_name, business_vertical_id, contact_person, email, phone, address, city, state, country, postal_code, website, business_type, annual_revenue, employee_count, established_year, tax_id, additional_data) VALUES
@@ -251,6 +242,7 @@ CREATE TABLE IF NOT EXISTS email_automation (
   body_html LONGTEXT,
   content_pdf_path VARCHAR(500), -- Path to saved PDF version
   is_processed BOOLEAN DEFAULT FALSE,
+  attachment_count INT DEFAULT 0, -- Number of attachments processed
   merchant_id INT,
   user_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -266,7 +258,8 @@ CREATE TABLE IF NOT EXISTS email_attachments (
   filename VARCHAR(255),
   content_type VARCHAR(255),
   size BIGINT,
-  file_data LONGBLOB, -- Actual file content
+  file_path VARCHAR(500), -- Path to saved file on disk
+  file_data LONGBLOB, -- Actual file content (optional, for small files)
   excel_data JSON, -- Extracted Excel data as JSON
   is_coupon_file BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -446,3 +439,25 @@ CREATE INDEX IF NOT EXISTS idx_price_comparison_item ON price_comparison(coupon_
 CREATE INDEX IF NOT EXISTS idx_price_comparison_merchant ON price_comparison(merchant_id);
 CREATE INDEX IF NOT EXISTS idx_sales_analytics_merchant ON sales_analytics_summary(merchant_id);
 CREATE INDEX IF NOT EXISTS idx_sales_analytics_family ON sales_analytics_summary(coupon_family_id);
+
+-- ============================================
+-- CRON JOB LOGGING TABLE
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS cron_job_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  job_name VARCHAR(100) NOT NULL,
+  started_at DATETIME NOT NULL,
+  completed_at DATETIME NULL,
+  status ENUM('running', 'completed', 'failed') DEFAULT 'running',
+  emails_processed INT DEFAULT 0,
+  emails_new INT DEFAULT 0,
+  emails_duplicate INT DEFAULT 0,
+  attachments_saved INT DEFAULT 0,
+  error_message TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_cron_job_logs_name ON cron_job_logs(job_name);
+CREATE INDEX IF NOT EXISTS idx_cron_job_logs_status ON cron_job_logs(status);
+CREATE INDEX IF NOT EXISTS idx_cron_job_logs_started ON cron_job_logs(started_at);

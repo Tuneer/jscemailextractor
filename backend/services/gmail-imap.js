@@ -71,11 +71,10 @@ class GmailIMAPService {
       criteria.push(['FROM', options.senderEmail]);
     }
     
-    criteria.push(['X-GM-RAW', 'has:attachment']);
-
-    if (options.query) {
-      criteria.push(['X-GM-RAW', options.query]);
-    }
+    // Combine query with has:attachment
+    const query = options.query || '';
+    const combinedQuery = query.includes('has:attachment') ? query : `${query} has:attachment`;
+    criteria.push(['X-GM-RAW', combinedQuery.trim()]);
 
     return criteria.length > 0 ? criteria : ['ALL'];
   }

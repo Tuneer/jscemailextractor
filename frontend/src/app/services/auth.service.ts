@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { LoginResponse, OTPRequest, OTPVerification } from '../models/email.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'https://emailextractor-apiv1.onrender.com/api/auth';
+  private apiUrl = environment.apiUrl;
   private tokenKey = 'auth_token';
   private userKey = 'user_email';
   
@@ -21,11 +22,32 @@ export class AuthService {
   }
 
   requestOTP(email: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/request-otp`, { email });
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/request-otp`, { email });
+  }
+
+  checkEmail(email: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/check-email`, { email });
+  }
+
+  loginWithPassword(email: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password })
+      .pipe(
+        tap(response => {
+          if (response.success && response.token) {
+            this.setToken(response.token);
+            this.setUserEmail(email);
+            this.isAuthenticatedSubject.next(true);
+          }
+        })
+      );
+  }
+
+  setPassword(email: string, username: string, password: string, fullName: string = '', phone: string = ''): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/set-password`, { email, username, password, full_name: fullName, phone });
   }
 
   verifyOTP(email: string, otp: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/verify-otp`, { email, otp })
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/verify-otp`, { email, otp })
       .pipe(
         tap(response => {
           if (response.success && response.token) {
